@@ -163,7 +163,7 @@ types-PyYAML==6.0.12.12
 # DOCUMENTATION
 # ============================================
 mkdocs==1.5.3
-mkdocs-material==9.4.14
+mkdocs-material==9.7.6
 
 # ============================================
 # DEPLOYMENT
