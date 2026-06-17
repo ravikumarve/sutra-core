@@ -12,7 +12,7 @@ pydantic-settings==2.1.0
 # ============================================
 # DATABASE
 # ============================================
-sqlalchemy==2.0.23
+sqlalchemy==2.0.51
 asyncpg==0.29.0
 alembic==1.12.1
 psycopg2-binary==2.9.9
