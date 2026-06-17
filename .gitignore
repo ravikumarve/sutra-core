@@ -157,3 +157,24 @@ dmypy.json
 
 # Tools
 .envsitter/
+
+# Agent orchestration files (internal — not for public repo)
+AGENTS.md
+agents-orchestrator.md
+engineering-ai-engineer.md
+engineering-backend-architect.md
+engineering-database-optimizer.md
+engineering-devops-automator.md
+engineering-frontend-developer.md
+engineering-security-engineer.md
+product-manager.md
+testing-reality-checker.md
+testing-evidence-collector.md
+
+# Phase READMEs (internal — not for public repo)
+README_PHASE2_COMPLETE.md
+README_PHASE3_COMPLETE.md
+README_PHASE4_COMPLETE.md
+README_PHASE5_COMPLETE.md
+README_PHASE6_COMPLETE.md
+README_PHASE7_COMPLETE.md
