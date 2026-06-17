@@ -1,0 +1,253 @@
+# Docker Compose for SUTRA Core Development
+# Multi-service development environment
+
+version: '3.8'
+
+services:
+  # ============================================
+  # PostgreSQL Database
+  # ============================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: sutra_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sutra_user
+      POSTGRES_PASSWORD: sutra_password
+      POSTGRES_DB: sutra_db
+      POSTGRES_INITDB_ARGS: "-E UTF8 --locale=C"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sutra_user -d sutra_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sutra_network
+
+  # ============================================
+  # Redis Cache & Message Queue
+  # ============================================
+  redis:
+    image: redis:7-alpine
+    container_name: sutra_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass redis_password
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sutra_network
+
+  # ============================================
+  # SUTRA Core Application
+  # ============================================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+      args:
+        BUILD_DATE: ${BUILD_DATE:-2026-04-26}
+        VCS_REF: ${VCS_REF:-latest}
+    container_name: sutra_app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # Application
+      DEBUG: "true"
+      ENVIRONMENT: development
+      HOST: 0.0.0.0
+      PORT: 8000
+      WORKERS: 1
+      
+      # Database
+      DATABASE_URL: postgresql://sutra_user:sutra_password@postgres:5432/sutra_db
+      DATABASE_POOL_SIZE: 10
+      DATABASE_MAX_OVERFLOW: 20
+      
+      # Redis
+      REDIS_URL: redis://:redis_password@redis:6379/0
+      REDIS_POOL_SIZE: 10
+      
+      # Meta WhatsApp
+      META_APP_ID: ${META_APP_ID}
+      META_APP_SECRET: ${META_APP_SECRET}
+      META_PHONE_NUMBER_ID: ${META_PHONE_NUMBER_ID}
+      META_VERIFY_TOKEN: ${META_VERIFY_TOKEN}
+      META_ACCESS_TOKEN: ${META_ACCESS_TOKEN}
+      
+      # LLM APIs
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      
+      # Security
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-in-production}
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      REFRESH_TOKEN_EXPIRE_DAYS: 7
+      
+      # Multi-tenancy
+      DEFAULT_TENANT_ID: default
+      TENANT_ISOLATION_ENABLED: "true"
+      
+      # GST
+      DEFAULT_GST_STATE_CODE: 24
+      
+      # Monitoring
+      MONITORING_ENABLED: "true"
+      PROMETHEUS_PORT: 9090
+      LOG_LEVEL: INFO
+      
+      # Backup
+      BACKUP_ENABLED: "true"
+      BACKUP_SCHEDULE: "0 2 * * *"
+      BACKUP_RETENTION_DAYS: 30
+      BACKUP_PATH: /app/backups
+      
+      # Alerts
+      RESTOCK_THRESHOLD_UNITS: 10
+      UDHAAR_ALERT_DAYS: 30
+      
+      # Performance
+      MAX_REQUEST_SIZE: 10485760
+      MAX_WEBHOOK_RETRIES: 3
+      WEBHOOK_TIMEOUT: 30
+      
+      # Rate limiting
+      RATE_LIMIT_ENABLED: "true"
+      RATE_LIMIT_REQUESTS: 100
+      RATE_LIMIT_PERIOD: 60
+    volumes:
+      - ./src:/app/src
+      - ./logs:/app/logs
+      - ./backups:/app/backups
+      - ./alembic.ini:/app/alembic.ini
+      - ./src/db/migrations:/app/src/db/migrations
+    ports:
+      - "8000:8000"
+      - "9090:9090"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - sutra_network
+
+  # ============================================
+  # Prometheus Monitoring
+  # ============================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: sutra_prometheus
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    ports:
+      - "9091:9090"
+    networks:
+      - sutra_network
+
+  # ============================================
+  # Grafana Dashboards
+  # ============================================
+  grafana:
+    image: grafana/grafana:latest
+    container_name: sutra_grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning
+      - ./docker/grafana/dashboards:/var/lib/grafana/dashboards
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - sutra_network
+
+  # ============================================
+  # pgAdmin for Database Management
+  # ============================================
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: sutra_pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@sutra.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - sutra_network
+
+  # ============================================
+  # Redis Commander for Redis Management
+  # ============================================
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: sutra_redis_commander
+    restart: unless-stopped
+    environment:
+      REDIS_HOSTS: local|redis:6379:0:redis_password
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+    networks:
+      - sutra_network
+
+# ============================================
+# Volumes
+# ============================================
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+# ============================================
+# Networks
+# ============================================
+networks:
+  sutra_network:
+    driver: bridge

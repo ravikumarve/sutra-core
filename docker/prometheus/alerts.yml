@@ -1,0 +1,298 @@
+# Prometheus Alerting Rules for SUTRA Core
+# Production alerting configuration
+
+groups:
+  # ============================================
+  # Application Health Alerts
+  # ============================================
+  - name: application_health
+    interval: 30s
+    rules:
+      # Application down
+      - alert: ApplicationDown
+        expr: up{job="sutra_app"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "SUTRA application is down"
+          description: "SUTRA application has been down for more than 1 minute on instance {{ $labels.instance }}"
+
+      # High error rate
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value }} errors/sec on instance {{ $labels.instance }}"
+
+      # High latency
+      - alert: HighLatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "High latency detected"
+          description: "95th percentile latency is {{ $value }}s on instance {{ $labels.instance }}"
+
+  # ============================================
+  # Database Health Alerts
+  # ============================================
+  - name: database_health
+    interval: 30s
+    rules:
+      # Database down
+      - alert: DatabaseDown
+        expr: pg_up{job="sutra_postgres"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "PostgreSQL database is down"
+          description: "PostgreSQL database has been down for more than 1 minute on instance {{ $labels.instance }}"
+
+      # High database connections
+      - alert: HighDatabaseConnections
+        expr: pg_stat_activity_count{datname="sutra_db"} > 80
+        for: 5m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "High database connection count"
+          description: "Database has {{ $value }} active connections on instance {{ $labels.instance }}"
+
+      # Slow database queries
+      - alert: SlowDatabaseQueries
+        expr: pg_stat_statements_mean_exec_time > 1.0
+        for: 10m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "Slow database queries detected"
+          description: "Average query execution time is {{ $value }}s on instance {{ $labels.instance }}"
+
+      # Database replication lag
+      - alert: DatabaseReplicationLag
+        expr: pg_replication_lag_seconds > 30
+        for: 5m
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "Database replication lag detected"
+          description: "Replication lag is {{ $value }}s on instance {{ $labels.instance }}"
+
+  # ============================================
+  # Redis Health Alerts
+  # ============================================
+  - name: redis_health
+    interval: 30s
+    rules:
+      # Redis down
+      - alert: RedisDown
+        expr: redis_up{job="sutra_redis"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "Redis is down"
+          description: "Redis has been down for more than 1 minute on instance {{ $labels.instance }}"
+
+      # High Redis memory usage
+      - alert: HighRedisMemoryUsage
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "High Redis memory usage"
+          description: "Redis memory usage is {{ $value | humanizePercentage }} on instance {{ $labels.instance }}"
+
+      # Redis connection count
+      - alert: HighRedisConnections
+        expr: redis_connected_clients > 100
+        for: 5m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "High Redis connection count"
+          description: "Redis has {{ $value }} active connections on instance {{ $labels.instance }}"
+
+  # ============================================
+  # System Resource Alerts
+  # ============================================
+  - name: system_resources
+    interval: 30s
+    rules:
+      # High CPU usage
+      - alert: HighCPUUsage
+        expr: rate(process_cpu_seconds_total{job="sutra_app"}[5m]) > 0.8
+        for: 10m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is {{ $value | humanizePercentage }} on instance {{ $labels.instance }}"
+
+      # High memory usage
+      - alert: HighMemoryUsage
+        expr: process_resident_memory_bytes{job="sutra_app"} / node_memory_MemTotal_bytes > 0.8
+        for: 10m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is {{ $value | humanizePercentage }} on instance {{ $labels.instance }}"
+
+      # High disk usage
+      - alert: HighDiskUsage
+        expr: (node_filesystem_size_bytes - node_filesystem_free_bytes) / node_filesystem_size_bytes > 0.8
+        for: 10m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "High disk usage detected"
+          description: "Disk usage is {{ $value | humanizePercentage }} on instance {{ $labels.instance }}"
+
+  # ============================================
+  # Business Logic Alerts
+  # ============================================
+  - name: business_logic
+    interval: 1m
+    rules:
+      # Failed webhook deliveries
+      - alert: FailedWebhookDeliveries
+        expr: rate(webhook_deliveries_total{status="failed"}[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "High webhook delivery failure rate"
+          description: "Webhook delivery failure rate is {{ $value }} failures/sec on instance {{ $labels.instance }}"
+
+      # Failed agent messages
+      - alert: FailedAgentMessages
+        expr: rate(agent_messages_total{status="failed"}[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "High agent message failure rate"
+          description: "Agent message failure rate is {{ $value }} failures/sec on instance {{ $labels.instance }}"
+
+      # Low inventory items
+      - alert: LowInventoryItems
+        expr: inventory_items_total{quantity < 10} > 0
+        for: 5m
+        labels:
+          severity: info
+          team: business
+        annotations:
+          summary: "Low inventory items detected"
+          description: "{{ $value }} inventory items are below threshold on instance {{ $labels.instance }}"
+
+      # Overdue credit payments
+      - alert: OverdueCreditPayments
+        expr: credit_payments_overdue_total > 0
+        for: 5m
+        labels:
+          severity: warning
+          team: business
+        annotations:
+          summary: "Overdue credit payments detected"
+          description: "{{ $value }} credit payments are overdue on instance {{ $labels.instance }}"
+
+  # ============================================
+  # Security Alerts
+  # ============================================
+  - name: security
+    interval: 30s
+    rules:
+      # Failed authentication attempts
+      - alert: HighFailedAuthAttempts
+        expr: rate(auth_attempts_total{status="failed"}[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          team: security
+        annotations:
+          summary: "High failed authentication attempts"
+          description: "Failed authentication rate is {{ $value }} attempts/sec on instance {{ $labels.instance }}"
+
+      # Suspicious webhook activity
+      - alert: SuspiciousWebhookActivity
+        expr: rate(webhook_signature_verification_failures[5m]) > 5
+        for: 5m
+        labels:
+          severity: critical
+          team: security
+        annotations:
+          summary: "Suspicious webhook activity detected"
+          description: "Webhook signature verification failure rate is {{ $value }} failures/sec on instance {{ $labels.instance }}"
+
+      # Rate limit violations
+      - alert: HighRateLimitViolations
+        expr: rate(rate_limit_violations_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          team: security
+        annotations:
+          summary: "High rate limit violations"
+          description: "Rate limit violation rate is {{ $value }} violations/sec on instance {{ $labels.instance }}"
+
+  # ============================================
+  # Backup Alerts
+  # ============================================
+  - name: backup
+    interval: 5m
+    rules:
+      # Backup failed
+      - alert: BackupFailed
+        expr: backup_status{status="failed"} == 1
+        for: 1m
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "Database backup failed"
+          description: "Database backup failed on instance {{ $labels.instance }}"
+
+      # Backup not recent
+      - alert: BackupNotRecent
+        expr: time() - backup_last_success_timestamp > 86400
+        for: 5m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "Database backup not recent"
+          description: "Last successful backup was {{ $value | humanizeDuration }} ago on instance {{ $labels.instance }}"
+
+      # Backup verification failed
+      - alert: BackupVerificationFailed
+        expr: backup_verification_status{status="failed"} == 1
+        for: 1m
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "Backup verification failed"
+          description: "Backup verification failed on instance {{ $labels.instance }}"
