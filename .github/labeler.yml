@@ -1,0 +1,43 @@
+# Auto-label PRs based on changed paths
+# Uses: https://github.com/actions/labeler
+
+"agent":
+  - src/agents/**/*
+
+"api":
+  - src/api/**/*
+
+"database":
+  - src/db/**/*
+  - alembic.ini
+  - src/db/migrations/**/*
+
+"security":
+  - src/security/**/*
+
+"config":
+  - src/config/**/*
+  - .env.example
+  - env.production.template
+
+"docker":
+  - Dockerfile
+  - docker-compose*.yml
+  - docker/**/*
+
+"ci":
+  - .github/workflows/**/*
+  - .github/dependabot.yml
+
+"docs":
+  - docs/**/*
+  - README.md
+  - CONTRIBUTING.md
+  - LICENSE
+
+"tests":
+  - tests/**/*
+  - pytest.ini
+
+"scripts":
+  - scripts/**/*

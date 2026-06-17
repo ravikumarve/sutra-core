@@ -24,7 +24,7 @@
   <img src="https://img.shields.io/badge/status-production--ready-brightgreen" alt="Status" />
   <img src="https://img.shields.io/badge/Deploy-Docker%20%7C%20systemd-lightgrey" alt="Deploy" />
   <a href="https://github.com/ravikumarve/sutra-core/actions">
-    <img src="https://github.com/ravikumarve/sutra-core/actions/workflows/ci-cd.yml/badge.svg" alt="CI/CD" />
+    <img src="https://github.com/ravikumarve/sutra-core/actions/workflows/ci.yml/badge.svg" alt="CI" />
   </a>
   <a href="https://gumroad.com/l/sutra-core">
     <img src="https://img.shields.io/badge/Buy-Gumroad-FF90E8?logo=gumroad" alt="Gumroad" />
