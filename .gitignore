@@ -178,3 +178,12 @@ README_PHASE4_COMPLETE.md
 README_PHASE5_COMPLETE.md
 README_PHASE6_COMPLETE.md
 README_PHASE7_COMPLETE.md
+
+# Internal implementation notes
+README_IMPLEMENTATION.md
+
+# Internal monitoring page
+dashboard.html
+
+# Internal documentation (planning, reviews, runbooks — local only)
+docs/
