@@ -132,7 +132,6 @@ local/
 .local/
 
 # Package manager
-package-lock.json
 yarn.lock
 Pipfile.lock
 
@@ -187,3 +186,13 @@ dashboard.html
 
 # Internal documentation (planning, reviews, runbooks — local only)
 docs/
+
+# Next.js build artifacts
+frontend/.next/
+frontend/out/
+
+# Session logs (internal)
+session-*.md
+
+# Design prototypes (superseded by frontend/)
+webpages/

@@ -1,0 +1,245 @@
+@import "tailwindcss";
+
+/* ─── LP6 Design System: Abyssal Tech + Emerald ─── */
+:root {
+  /* Background layers */
+  --bg-void: #020204;
+  --bg-surface: #07080f;
+  --bg-panel: #0c0e17;
+  --bg-glass: rgba(7, 8, 15, 0.4);
+
+  /* Borders */
+  --border-dim: rgba(255, 255, 255, 0.05);
+  --border-glow: rgba(0, 230, 118, 0.15);
+
+  /* Accents */
+  --emerald: #00e676;
+  --emerald-dim: rgba(0, 230, 118, 0.08);
+  --titanium: #f8fafc;
+
+  /* Text */
+  --text-main: #ffffff;
+  --text-muted: #94a3b8;
+  --text-faint: #334155;
+}
+
+@theme inline {
+  --color-bg-void: var(--bg-void);
+  --color-bg-surface: var(--bg-surface);
+  --color-bg-panel: var(--bg-panel);
+  --color-bg-glass: var(--bg-glass);
+
+  --color-border-dim: var(--border-dim);
+  --color-border-glow: var(--border-glow);
+
+  --color-emerald: var(--emerald);
+  --color-emerald-dim: var(--emerald-dim);
+  --color-titanium: var(--titanium);
+
+  --color-text-main: var(--text-main);
+  --color-text-muted: var(--text-muted);
+  --color-text-faint: var(--text-faint);
+
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --animate-blinking: blink 1s step-end infinite;
+  --animate-drift: drift 8s ease-in-out infinite;
+}
+
+/* ─── Fixed Background Elements ─── */
+#swarm-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.75;
+}
+
+.dot-matrix-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1;
+  pointer-events: none;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 25px 30px;
+  mask-image: radial-gradient(circle at 50% 30%, black 20%, transparent 85%);
+  -webkit-mask-image: radial-gradient(circle at 50% 30%, black 20%, transparent 85%);
+}
+
+.ambient-core {
+  position: fixed;
+  top: -20vh;
+  left: 50%;
+  translate: -50% 0;
+  width: 70vw;
+  height: 60vh;
+  background: radial-gradient(ellipse at center, rgba(0, 230, 118, 0.06), transparent 70%);
+  z-index: 0;
+  pointer-events: none;
+  filter: blur(80px);
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes drift {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+/* ─── Base Styles ─── */
+body {
+  background-color: var(--bg-void);
+  color: var(--text-main);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: var(--emerald-dim);
+  color: var(--emerald);
+}
+
+/* ─── Utility Classes ─── */
+.text-gradient {
+  background: linear-gradient(180deg, #fff 0%, var(--text-muted) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.glass-pane {
+  background: var(--bg-glass);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border: 1px solid var(--border-dim);
+  box-shadow: 0 50px 100px rgba(0, 0, 0, 0.6);
+}
+
+/* ─── Button Styles ─── */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 2rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-radius: 100px;
+  text-decoration: none;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: var(--titanium);
+  color: var(--bg-void);
+}
+
+.btn-primary:hover {
+  background: transparent;
+  color: var(--titanium);
+  border-color: var(--titanium);
+  translate: 0 -2px;
+}
+
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 2rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-radius: 100px;
+  text-decoration: none;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  border: 1px solid var(--border-dim);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-muted);
+  backdrop-filter: blur(10px);
+}
+
+.btn-outline:hover {
+  border-color: var(--emerald);
+  color: var(--emerald);
+  background: var(--emerald-dim);
+}
+
+/* ─── Hero Dual Visual ─── */
+.wa-mockup {
+  width: 250px;
+  border-radius: 20px;
+  padding: 1.25rem;
+  position: absolute;
+  left: -20px;
+  z-index: 3;
+  rotate: -4deg;
+}
+
+@media (hover: hover) {
+  .wa-mockup:hover {
+    rotate: 0deg;
+    translate: 0 -10px;
+    z-index: 5;
+    border-color: var(--border-glow);
+  }
+}
+
+.trace-panel {
+  width: 440px;
+  border-radius: 12px;
+  padding: 2.2rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  line-height: 1.9;
+  color: var(--text-muted);
+  position: relative;
+  z-index: 2;
+  rotate: 2deg;
+}
+
+@media (hover: hover) {
+  .trace-panel:hover {
+    rotate: 0deg;
+    translate: 0 -10px;
+    z-index: 5;
+    border-color: var(--border-glow);
+  }
+}
+
+/* ─── Responsive Hero ─── */
+@media (max-width: 1024px) {
+  .wa-mockup {
+    left: 40px;
+    position: absolute;
+  }
+  .trace-panel {
+    right: 40px;
+    transform: none;
+    position: absolute;
+  }
+}
+
+@media (max-width: 768px) {
+  .wa-mockup,
+  .trace-panel {
+    position: relative;
+    left: auto;
+    right: auto;
+    transform: none;
+    width: 100%;
+    max-width: 440px;
+  }
+}
