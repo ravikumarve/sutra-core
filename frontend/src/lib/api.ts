@@ -405,3 +405,121 @@ export async function fetchCustomerLedger(
   const qs = searchParams.toString();
   return request<LedgerData>(`/api/v1/customers/${customerId}/ledger${qs ? `?${qs}` : ""}`);
 }
+
+// ── Orders API ───────────────────────────────────────────────────────────────
+
+export interface OrderItemInfo {
+  id: string;
+  inventory_id: string;
+  sku: string | null;
+  product_name: string | null;
+  quantity: number;
+  unit_price: number;
+  gst_rate: number;
+  gst_amount: number;
+  total_amount: number;
+}
+
+export interface Order {
+  id: string;
+  tenant_id: string;
+  customer_id: string | null;
+  customer_name: string | null;
+  customer_phone: string | null;
+  order_number: string;
+  order_date: string | null;
+  total_amount: number;
+  total_gst: number;
+  discount_amount: number;
+  payment_method: string;
+  payment_status: string;
+  is_credit: boolean;
+  credit_amount: number;
+  status: string;
+  notes: string | null;
+  source: string;
+  created_at: string | null;
+  updated_at: string | null;
+  items: OrderItemInfo[] | null;
+}
+
+export interface OrderListData {
+  items: Order[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface OrderCreatePayload {
+  customer_id?: string;
+  payment_method?: string;
+  payment_status?: string;
+  is_credit?: boolean;
+  discount_amount?: number;
+  notes?: string;
+  source?: string;
+  items: { inventory_id: string; quantity: number; unit_price?: number; gst_rate?: number }[];
+}
+
+export interface OrderUpdatePayload {
+  status?: string;
+  payment_status?: string;
+  payment_method?: string;
+  notes?: string;
+  discount_amount?: number;
+}
+
+export async function fetchOrders(params?: {
+  status?: string;
+  payment_status?: string;
+  customer_id?: string;
+  search?: string;
+  date_from?: string;
+  date_to?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<OrderListData> {
+  const searchParams = new URLSearchParams();
+  if (params?.status) searchParams.set("status", params.status);
+  if (params?.payment_status) searchParams.set("payment_status", params.payment_status);
+  if (params?.customer_id) searchParams.set("customer_id", params.customer_id);
+  if (params?.search) searchParams.set("search", params.search);
+  if (params?.date_from) searchParams.set("date_from", params.date_from);
+  if (params?.date_to) searchParams.set("date_to", params.date_to);
+  if (params?.limit) searchParams.set("limit", String(params.limit));
+  if (params?.offset) searchParams.set("offset", String(params.offset));
+
+  const qs = searchParams.toString();
+  return request<OrderListData>(`/api/v1/orders/${qs ? `?${qs}` : ""}`);
+}
+
+export async function fetchOrder(orderId: string): Promise<{ order: Order }> {
+  return request<{ order: Order }>(`/api/v1/orders/${orderId}`);
+}
+
+export async function createOrder(
+  payload: OrderCreatePayload,
+): Promise<{ order: Order }> {
+  return request<{ order: Order }>("/api/v1/orders/", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateOrder(
+  orderId: string,
+  payload: OrderUpdatePayload,
+): Promise<{ order: Order }> {
+  return request<{ order: Order }>(`/api/v1/orders/${orderId}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteOrder(
+  orderId: string,
+): Promise<{ order_id: string; status: string }> {
+  return request<{ order_id: string; status: string }>(`/api/v1/orders/${orderId}`, {
+    method: "DELETE",
+  });
+}
