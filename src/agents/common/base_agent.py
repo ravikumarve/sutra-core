@@ -305,6 +305,11 @@ class BaseAgent(ABC):
                 await self._handle_expired_message(message)
                 return
             
+            # ERROR messages are terminal — don't respond with another error (would loop)
+            if message.message_type == MessageType.ERROR:
+                logger.warning(f"Received error message {message_id}: {message.payload.get('error', 'unknown')}")
+                return
+            
             # Log message received
             await self._log_message_received(message)
             

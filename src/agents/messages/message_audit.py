@@ -11,7 +11,7 @@ from enum import Enum
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
 from src.db.models import MessageAuditLog
-from src.db.connection import get_db_session
+from src.db.connection import get_db_session_context as get_db_session
 from src.config.settings import settings
 
 logger = logging.getLogger(__name__)

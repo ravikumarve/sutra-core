@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import (
 )
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.pool import NullPool, QueuePool
-from sqlalchemy import event
+from sqlalchemy import event, text
 from contextlib import asynccontextmanager
 import logging
 import time
@@ -129,9 +129,15 @@ class DatabaseManager:
 db_manager = DatabaseManager()
 
 
-@asynccontextmanager
 async def get_db_session():
-    """Dependency injection for FastAPI routes and standalone async with usage"""
+    """Dependency injection for FastAPI routes (async generator — FastAPI Depends handles yield properly)"""
+    async with db_manager.get_session() as session:
+        yield session
+
+
+@asynccontextmanager
+async def get_db_session_context():
+    """Standalone async with usage (e.g. message_audit.py) — wrapped with asynccontextmanager"""
     async with db_manager.get_session() as session:
         yield session
 
@@ -167,7 +173,7 @@ async def check_database_health() -> dict:
         
         # Test connection
         async with db_manager.get_session() as session:
-            await session.execute("SELECT 1")
+            await session.execute(text("SELECT 1"))
         
         latency_ms = (time.time() - start_time) * 1000
         health_status["latency_ms"] = round(latency_ms, 2)

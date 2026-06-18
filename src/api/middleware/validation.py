@@ -478,11 +478,14 @@ class ValidationMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         """Process request and validate"""
         # Skip validation for certain routes
+        # Auth routes skipped because they consume request body in middleware
+        # which prevents FastAPI from re-reading it in route handlers
         skip_routes = {
             "/health",
             "/docs",
             "/openapi.json",
             "/redoc",
+            "/api/v1/auth/",
             "/api/v1/agents/restart",
             "/api/v1/tenants/system/status",
         }

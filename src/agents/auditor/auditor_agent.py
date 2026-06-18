@@ -43,6 +43,8 @@ class AuditorAgent(BaseAgent):
             # Handle different message types
             if message.message_type == MessageType.ORDER_CREATED:
                 return await self._process_order_created(message)
+            elif message.message_type == MessageType.BUSINESS_VALIDATION:
+                return await self._process_business_validation(message)
             elif message.message_type == MessageType.PAYMENT_PROCESSED:
                 return await self._process_payment_processed(message)
             elif message.message_type == MessageType.CREDIT_SCORING:
@@ -71,6 +73,30 @@ class AuditorAgent(BaseAgent):
                 error_code="PROCESSING_ERROR"
             )
     
+    async def _process_business_validation(self, message: AgentMessage) -> Optional[AgentMessage]:
+        """
+        Process business validation audit
+        Log audit trail and respond with confirmation
+        """
+        try:
+            is_valid = message.payload.get("is_valid", False)
+            reason = message.payload.get("reason", "No reason provided")
+
+            if is_valid:
+                logger.info(f"Business validation passed for tenant {self.tenant_id}: {reason}")
+                # Terminal — return None to end the pipeline
+                return None
+            else:
+                return message.create_error_response(
+                    source_agent=self.agent_type,
+                    error_message=f"Business validation failed: {reason}",
+                    error_code="VALIDATION_FAILED"
+                )
+
+        except Exception as e:
+            logger.error(f"Error processing business validation: {e}")
+            raise
+
     async def _process_order_compliance(
         self,
         order_id: str,

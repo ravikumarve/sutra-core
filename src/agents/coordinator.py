@@ -237,26 +237,44 @@ class AgentCoordinator:
         message_data: Dict[str, Any]
     ) -> bool:
         """
-        Send message to specific tenant agent
+        Send message to specific tenant agent by publishing to its Redis stream
+        Uses redis_manager directly to avoid agent self-consumption loops.
         """
         try:
             if tenant_id not in self.tenant_agents:
                 logger.error(f"Tenant {tenant_id} not found")
                 return False
-            
-            agents = self.tenant_agents[tenant_id]
-            agent = agents.get(agent_type.value)
-            
-            if not agent:
-                logger.error(f"Agent {agent_type.value} not found for tenant {tenant_id}")
+
+            from src.agents.messages.message_schema import AgentMessage, MessageType, MessagePriority
+            from src.agents.messages.message_schema import MessageSerializer
+
+            # Construct message
+            message = AgentMessage(
+                tenant_id=tenant_id,
+                source_agent=AgentType.LIAISON,  # coordinator sends as liaison
+                target_agent=agent_type,
+                message_type=MessageType.TEXT,
+                payload=message_data,
+                priority=MessagePriority.NORMAL,
+                requires_confirmation=False
+            )
+
+            # Serialize and publish directly to Redis stream
+            serialized = MessageSerializer.serialize_for_stream(message)
+
+            msg_id = await self.redis_manager.publish_message(
+                tenant_id=tenant_id,
+                stream_type=agent_type.value,
+                message=serialized
+            )
+
+            if msg_id:
+                logger.info(f"Published message {msg_id} to {agent_type.value} stream for tenant {tenant_id}")
+                return True
+            else:
+                logger.error(f"Failed to publish message for tenant {tenant_id}")
                 return False
-            
-            # Send message to agent
-            # TODO: Implement message sending
-            logger.info(f"Sent message to {agent_type.value} agent for tenant {tenant_id}")
-            
-            return True
-            
+
         except Exception as e:
             logger.error(f"Failed to send message to tenant {tenant_id}: {e}")
             return False

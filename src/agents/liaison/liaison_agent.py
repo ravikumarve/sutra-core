@@ -84,7 +84,7 @@ class LiaisonAgent(BaseAgent):
             # Analyze sentiment
             sentiment_result = await self._analyze_sentiment(text)
             
-            # Create response message
+            # Create response message with target_agent=STRATEGIST for pipeline forwarding
             response = message.create_response(
                 source_agent=self.agent_type,
                 message_type=MessageType.INTENT_EXTRACTED,
@@ -99,12 +99,13 @@ class LiaisonAgent(BaseAgent):
                 },
                 confidence=intent_result["confidence"]
             )
+            response.target_agent = AgentType.STRATEGIST  # forward to strategist
             
             # Set priority based on sentiment
             if sentiment_result["sentiment"] == "negative":
                 response.priority = MessagePriority.HIGH
             
-            logger.info(f"Extracted intent: {intent_result['intent']} with confidence {intent_result['confidence']}")
+            logger.info(f"Extracted intent: {intent_result['intent']} with confidence {intent_result['confidence']} — forwarding to strategist")
             return response
             
         except Exception as e:
