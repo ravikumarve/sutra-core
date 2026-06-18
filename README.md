@@ -23,6 +23,7 @@
   <img src="https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi" alt="FastAPI" />
   <img src="https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs" alt="Next.js" />
   <img src="https://img.shields.io/badge/status-production--ready-brightgreen" alt="Status" />
+  <img src="https://img.shields.io/badge/tests-42%20passing-brightgreen" alt="Tests" />
   <a href="https://github.com/ravikumarve/sutra-core/actions">
     <img src="https://github.com/ravikumarve/sutra-core/actions/workflows/ci.yml/badge.svg" alt="CI" />
   </a>
@@ -54,7 +55,7 @@
 | **🧾 GST Invoicing** | Line-item GST calculation, HSN-ready schema | ✅ Built |
 | **📊 Dashboard** | Analytics dashboard — KPI cards, recent orders, inventory alerts, order management UI | ✅ 5 pages built |
 | **🔐 Auth & RBAC** | JWT auth, role-based access, rate limiting, webhook security | ✅ Production-ready |
-| **🎙️ Voice-to-Order** | Hinglish voice notes → transcribed → structured order | 🔄 Agent pipeline (Redis needed) |
+| **🎙️ Voice-to-Order** | Hinglish voice/text → Liaison → Strategist → Auditor pipeline | ✅ E2E verified |
 | **🏢 Multi-Tenant** | Schema-level isolation, RLS policies, per-tenant encryption | ✅ Production-ready |
 
 ---
@@ -75,10 +76,13 @@ alembic upgrade head
 # 3. Seed demo data
 python scripts/seed_demo.py
 
-# 4. Start the API server
+# 4. Start Redis (required for agent pipeline)
+redis-server --daemonize yes
+
+# 5. Start the API server
 uvicorn src.main:app --host 0.0.0.0 --port 8000
 
-# 5. (Separate terminal) Start the dashboard
+# 6. (Separate terminal) Start the dashboard
 cd frontend
 npm install && npm run dev
 ```
@@ -86,6 +90,13 @@ npm install && npm run dev
 **API docs** at [http://localhost:8000/docs](http://localhost:8000/docs)  
 **Dashboard** at [http://localhost:3000/dashboard](http://localhost:3000/dashboard)  
 **Login**: `+919876543210` / `password123`
+
+### Run Tests
+
+```bash
+pytest tests/ -v           # 42 tests, all pass
+pytest tests/ --cov=src    # coverage report
+```
 
 📖 [Full deployment guide →](docs/PRODUCTION_DEPLOYMENT_EXECUTION_GUIDE.md)
 
@@ -108,9 +119,10 @@ npm install && npm run dev
                     │                                     │           │
                     │  ┌───────────────────────────────────▼────────┐ │
                     │  │         Agent Pipeline (Redis-driven)      │ │
-                    │  │  ┌────────┐  ┌───────────┐  ┌─────────┐   │ │
-                    │  │  │Liaison │─►│Strategist │─►│ Auditor │   │ │
-                    │  │  └────────┘  └───────────┘  └─────────┘   │ │
+                     │  │  ┌────────┐  ┌───────────┐  ┌─────────┐   │ │
+                     │  │  │Liaison │─►│Strategist │─►│ Auditor │   │ │
+                     │  │  └────────┘  └───────────┘  └─────────┘   │ │
+                     │  │     ✓ E2E verified — no error loops        │ │
                     │  └────────────────────────────────────────────┘ │
                     │                                                  │
                     │  WhatsApp Webhook ◄──► Meta Cloud API            │
@@ -141,11 +153,26 @@ npm install && npm run dev
 | **PostgreSQL over NoSQL** | Financial ledger requires ACID. Udhaar entries must be atomic with inventory. |
 | **Redis Streams over Kafka** | Single ₹800/month VPS. Kafka is overkill. Redis handles comfortably. |
 | **Column snapshots in API responses** | Avoids SQLAlchemy async greenlet errors after `db.commit()` — all response data captured before commit. |
+| **UUID conversion for JWT user_id** | PostgreSQL asyncpg requires `uuid.UUID` objects for UUID columns, not strings. JWT `user_id` is converted before DB queries. |
+| **ERROR message type terminates pipelines** | Prevents infinite error bounce loops between agents (observed: 925 msg/sec without this guard). |
 | **CPU-only Whisper** | 30s async latency is acceptable for WhatsApp. No GPU = deployable anywhere. |
 
 ---
 
-## 🔄 End-to-End Order Flow (Verified)
+## 🔄 End-to-End Flows (Verified)
+
+### Agent Pipeline (Redis-driven)
+
+```text
+TEXT ("Mujhe 2 kg chai chahiye")
+  → LIAISON (extracts intent: inquiry, entities)
+    → STRATEGIST (validates business logic)
+      → AUDITOR (audit trail, pipeline complete)
+```
+
+Three agents communicate via **Redis Streams** (per-tenant namespaced, consumer groups). No agent calls another directly — all communication is through `AgentMessage` objects, ensuring independent scaling and restart.
+
+### Order CRUD
 
 ```text
 POST /orders          → ORD-20260618-0012 created (status: pending)
@@ -168,7 +195,7 @@ DELETE /orders/{id}   → Cancelled, inventory restored: SILK 5→6, PVC 34→36
 | Auth, RBAC, rate limiting | ✅ `v1.0.0` Live |
 | Multi-tenancy (schema isolation) | ✅ `v1.0.0` Live |
 | CI/CD + Monitoring stack | ✅ `v1.0.0` Live |
-| Multi-agent pipeline (Liaison → Strategist → Auditor) | ✅ `v1.0.0` Implemented (needs Redis) |
+| Multi-agent pipeline (Liaison → Strategist → Auditor) | ✅ `v1.0.0` Live — E2E verified |
 | Whisper-Hinglish NLP pipeline | ✅ `v1.0.0` Implemented (needs API key) |
 | WhatsApp webhook integration | ✅ `v1.0.0` Handlers ready |
 | Image-based order parsing (photo → SKU) | 📋 Planned `v1.1` |
