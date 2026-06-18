@@ -506,12 +506,16 @@ async def get_current_user(
         payload = auth_manager.decode_token(token)
         
         # Get user ID from token
-        user_id = payload.get("user_id")
-        if not user_id:
+        import uuid
+        user_id_str = payload.get("user_id")
+        if not user_id_str:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid token"
             )
+        
+        # Convert to UUID for PostgreSQL compatibility (asyncpg requires UUID object)
+        user_id = uuid.UUID(user_id_str)
         
         # Find user using optimized query
         query = select(User).where(User.id == user_id)
