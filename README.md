@@ -60,6 +60,23 @@
 
 ---
 
+## 🖼️ Dashboard Preview
+
+| | |
+|:---|---:|
+| **🔐 Login** — WhatsApp number + password JWT auth | <img src="Sutra-Screens/Login.png" width="300" alt="Login" /> |
+| **📊 Overview** — KPI cards (orders, revenue, udhaar, low-stock) + recent orders table + inventory alerts | <img src="Sutra-Screens/Overview.png" width="300" alt="Overview" /> |
+| **📋 Orders** — Create, confirm, deliver, cancel with auto inventory sync and GST calculation | <img src="Sutra-Screens/Orders.png" width="300" alt="Orders" /> |
+| **📦 Inventory** — Full CRUD, stock adjustments, category filtering, low-stock alerts | <img src="Sutra-Screens/Inventory.png" width="300" alt="Inventory" /> |
+| **💳 Udhaar** — Credit ledger with balance tracking, customer debt overview | <img src="Sutra-Screens/Udhaar.png" width="300" alt="Udhaar" /> |
+| **🧾 Invoices** — GST-compliant invoice history, HSN-ready schema | <img src="Sutra-Screens/Invoices.png" width="300" alt="Invoices" /> |
+| **⚙️ Settings** — Profile management, integrations status | <img src="Sutra-Screens/Settings.png" width="300" alt="Settings" /> |
+
+> <img src="Sutra-Screens/Landing.png" width="700" alt="Landing Page" />
+> *The LP6-designed landing page — abyssal tech with emerald accents*
+
+---
+
 ## 🚀 Quick Start (Dev — No Docker Required)
 
 ```bash
