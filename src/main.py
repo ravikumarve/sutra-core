@@ -15,7 +15,7 @@ import uvicorn
 
 from src.config.settings import settings
 from src.db.connection import db_manager
-from src.api.routes import health, auth, webhooks, agents, tenants, dashboard, inventory
+from src.api.routes import health, auth, webhooks, agents, tenants, dashboard, inventory, customers
 from src.api.middleware.security import SecurityMiddleware
 from src.api.middleware.validation import ValidationMiddleware
 from src.api.middleware.rate_limit import RateLimitMiddleware
@@ -158,6 +158,7 @@ app.include_router(agents.router, prefix="/api/v1/agents", tags=["Agents"])
 app.include_router(tenants.router, prefix="/api/v1/tenants", tags=["Tenants"])
 app.include_router(dashboard.router, prefix="/api/v1/dashboard", tags=["Dashboard"])
 app.include_router(inventory.router, prefix="/api/v1/inventory", tags=["Inventory"])
+app.include_router(customers.router, prefix="/api/v1/customers", tags=["Customers"])
 
 
 # Root endpoint

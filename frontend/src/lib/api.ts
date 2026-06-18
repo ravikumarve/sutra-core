@@ -289,3 +289,119 @@ export async function adjustStock(
 export async function fetchInventoryCategories(): Promise<{ categories: string[] }> {
   return request<{ categories: string[] }>("/api/v1/inventory/categories");
 }
+
+// ── Customers API ────────────────────────────────────────────────────────────
+
+export interface Customer {
+  id: string;
+  tenant_id: string;
+  phone_number: string;
+  name: string | null;
+  address: string | null;
+  credit_limit: number;
+  current_balance: number;
+  is_active: boolean;
+  created_at: string | null;
+  updated_at: string | null;
+  total_orders?: number;
+}
+
+export interface CustomerListData {
+  items: Customer[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface CustomerCreatePayload {
+  phone_number: string;
+  name?: string;
+  address?: string;
+  credit_limit?: number;
+}
+
+export interface CustomerUpdatePayload {
+  phone_number?: string;
+  name?: string;
+  address?: string;
+  credit_limit?: number;
+  current_balance?: number;
+  is_active?: boolean;
+}
+
+export interface LedgerEntry {
+  id: string;
+  transaction_type: string;
+  amount: number;
+  balance_after: number;
+  description: string | null;
+  reference_number: string | null;
+  source: string;
+  created_at: string | null;
+}
+
+export interface LedgerData {
+  entries: LedgerEntry[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export async function fetchCustomers(params?: {
+  search?: string;
+  has_balance?: boolean;
+  is_active?: boolean;
+  limit?: number;
+  offset?: number;
+}): Promise<CustomerListData> {
+  const searchParams = new URLSearchParams();
+  if (params?.search) searchParams.set("search", params.search);
+  if (params?.has_balance !== undefined) searchParams.set("has_balance", String(params.has_balance));
+  if (params?.is_active !== undefined) searchParams.set("is_active", String(params.is_active));
+  if (params?.limit) searchParams.set("limit", String(params.limit));
+  if (params?.offset) searchParams.set("offset", String(params.offset));
+
+  const qs = searchParams.toString();
+  return request<CustomerListData>(`/api/v1/customers/${qs ? `?${qs}` : ""}`);
+}
+
+export async function fetchCustomer(customerId: string): Promise<{ customer: Customer }> {
+  return request<{ customer: Customer }>(`/api/v1/customers/${customerId}`);
+}
+
+export async function createCustomer(
+  payload: CustomerCreatePayload,
+): Promise<{ customer: Customer }> {
+  return request<{ customer: Customer }>("/api/v1/customers/", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateCustomer(
+  customerId: string,
+  payload: CustomerUpdatePayload,
+): Promise<{ customer: Customer }> {
+  return request<{ customer: Customer }>(`/api/v1/customers/${customerId}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteCustomer(customerId: string): Promise<{ customer_id: string }> {
+  return request<{ customer_id: string }>(`/api/v1/customers/${customerId}`, {
+    method: "DELETE",
+  });
+}
+
+export async function fetchCustomerLedger(
+  customerId: string,
+  params?: { limit?: number; offset?: number },
+): Promise<LedgerData> {
+  const searchParams = new URLSearchParams();
+  if (params?.limit) searchParams.set("limit", String(params.limit));
+  if (params?.offset) searchParams.set("offset", String(params.offset));
+
+  const qs = searchParams.toString();
+  return request<LedgerData>(`/api/v1/customers/${customerId}/ledger${qs ? `?${qs}` : ""}`);
+}
