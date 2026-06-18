@@ -1,11 +1,11 @@
 <p align="center">
-  <img src="assets/logo.png" width="140" alt="SUTRA Core logo" />
+  <img src="assets/logo.svg" width="140" alt="SUTRA Core logo" />
 </p>
 
 <h1 align="center">SUTRA Core</h1>
 
 <p align="center">
-  <strong>AI-Powered WhatsApp ERP for India's 63 Million MSMEs</strong><br />
+  <strong>AI-Powered WhatsApp ERP &amp; Order Management for India's 63 Million MSMEs</strong><br />
   Voice. Text. Hinglish. Zero training. Runs on a ₹800/month VPS.
 </p>
 
@@ -21,14 +21,20 @@
   </a>
   <img src="https://img.shields.io/badge/Python-3.12+-3776AB?logo=python&logoColor=white" alt="Python" />
   <img src="https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi" alt="FastAPI" />
+  <img src="https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs" alt="Next.js" />
   <img src="https://img.shields.io/badge/status-production--ready-brightgreen" alt="Status" />
-  <img src="https://img.shields.io/badge/Deploy-Docker%20%7C%20systemd-lightgrey" alt="Deploy" />
   <a href="https://github.com/ravikumarve/sutra-core/actions">
     <img src="https://github.com/ravikumarve/sutra-core/actions/workflows/ci.yml/badge.svg" alt="CI" />
   </a>
-  <a href="https://gumroad.com/l/sutra-core">
-    <img src="https://img.shields.io/badge/Buy-Gumroad-FF90E8?logo=gumroad" alt="Gumroad" />
-  </a>
+</p>
+
+<p align="center">
+  <code>📦 Inventory CRUD</code>
+  <code>👥 Customer Mgmt</code>
+  <code>📋 Order Pipeline</code>
+  <code>💳 Udhaar Ledger</code>
+  <code>🧾 GST Invoicing</code>
+  <code>📊 Dashboard</code>
 </p>
 
 ---
@@ -37,72 +43,92 @@
 
 ---
 
-## ✨ Features
+## ✨ Built & Working
 
-| Capability | What It Does |
-|------------|-------------|
-| **🎙️ Voice-to-Order** | Hinglish voice notes → transcribed → structured order in <30s |
-| **📦 Auto Inventory** | Stock deducted on confirmation. Restock alerts before stockout. |
-| **💰 Udhaar (Credit) Mgmt** | Track credit limits, aging, auto-reminders on WhatsApp |
-| **🧾 GST Invoicing** | PDF invoices generated and delivered in the same WhatsApp thread |
-| **🏢 Multi-Tenant** | One deployment serves unlimited businesses with isolated data |
-| **🔐 SOC 2 Ready** | AES-256 encryption, JWT auth, webhook security, RBAC |
-| **🖥️ Owner Dashboard** | Analytics-only Next.js dashboard for month-end review |
-| **📡 Monitoring** | Prometheus + Grafana stack. Alertmanager for critical events. |
+| Module | What It Does | Status |
+|--------|-------------|--------|
+| **📦 Inventory CRUD** | Full inventory management — categories, stock adjustments, search, pagination, low-stock alerts | ✅ E2E tested |
+| **👥 Customers CRUD** | Customer profiles, search, credit limit tracking | ✅ E2E tested |
+| **📋 Orders Pipeline** | Create, confirm, deliver, cancel — auto inventory deduction/restore, credit ledger sync | ✅ E2E tested |
+| **💳 Udhaar Ledger** | Credit transaction history, balance tracking per customer | ✅ Built |
+| **🧾 GST Invoicing** | Line-item GST calculation, HSN-ready schema | ✅ Built |
+| **📊 Dashboard** | Analytics dashboard — KPI cards, recent orders, inventory alerts, order management UI | ✅ 5 pages built |
+| **🔐 Auth & RBAC** | JWT auth, role-based access, rate limiting, webhook security | ✅ Production-ready |
+| **🎙️ Voice-to-Order** | Hinglish voice notes → transcribed → structured order | 🔄 Agent pipeline (Redis needed) |
+| **🏢 Multi-Tenant** | Schema-level isolation, RLS policies, per-tenant encryption | ✅ Production-ready |
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Quick Start (Dev — No Docker Required)
 
 ```bash
+# 1. Clone & set up
 git clone https://github.com/ravikumarve/sutra-core.git
-cd sutra-core && cp .env.example .env   # configure your API keys
-docker compose up --build                # starts FastAPI + Redis + PostgreSQL
+cd sutra-core
+python -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+
+# 2. Run database migrations
+alembic upgrade head
+
+# 3. Seed demo data
+python scripts/seed_demo.py
+
+# 4. Start the API server
+uvicorn src.main:app --host 0.0.0.0 --port 8000
+
+# 5. (Separate terminal) Start the dashboard
+cd frontend
+npm install && npm run dev
 ```
 
-That's it. Your webhook listener is live at `http://localhost:8000`. Configure it as your Meta WhatsApp webhook URL and start receiving orders.
+**API docs** at [http://localhost:8000/docs](http://localhost:8000/docs)  
+**Dashboard** at [http://localhost:3000/dashboard](http://localhost:3000/dashboard)  
+**Login**: `+919876543210` / `password123`
 
 📖 [Full deployment guide →](docs/PRODUCTION_DEPLOYMENT_EXECUTION_GUIDE.md)
 
 ---
 
-## 🧠 How It Works
+## 🧠 Architecture
 
-SUTRA is an **asynchronous multi-agent mesh**. Three specialized agents process every message through an event-driven pipeline:
-
-```text
-  WhatsApp ──► Webhook ──► Redis Queue ──► ┌─────────┐    ┌───────────┐
-  (Voice/Text)            (Event Bus)        │ Liaison │───►│ Strategist│
-                                             │ (Intent)│    │(Execution)│
-                                             └─────────┘    └─────┬─────┘
-                                                                  │
-                                              ┌─────────┐         │
-                                              │ Auditor │◄────────┘
-                                              │(Ledger) │──► PDF Invoice
-                                              └─────────┘    WhatsApp Reply
 ```
-
-| Agent | Role | Integrations |
-|-------|------|-------------|
-| **Liaison** | Decode intent from raw text/audio | Whisper-Hinglish, Sentiment Analyzer |
-| **Strategist** | Validate & execute against DB | Inventory, Credit Scoring, Pricing |
-| **Auditor** | Immutable ledger + compliance | PDF Generator, GST Validator |
-
-No agent calls another directly. All communication is through `AgentMessage` objects on Redis Streams — enabling independent scaling, restart, and replacement.
-
----
+                    ┌──────────────────────────────────────────────────┐
+                    │                 SUTRA Core API                    │
+                    │  (FastAPI, multi-tenant, JWT-authenticated)       │
+                    │                                                  │
+  ┌─────────┐       │  ┌──────────┐  ┌──────────┐  ┌──────────────┐  │       ┌──────────┐
+  │         │       │  │Inventory │  │ Customers│  │   Orders     │  │       │          │
+  │ Mobile /│ HTTP  │  │  CRUD    │  │  CRUD    │  │   CRUD       │  │  JWT  │  Next.js │
+  │ Desktop │──────►│  ├──────────┤  ├──────────┤  ├──────────────┤  │◄─────►│Dashboard │
+  │         │       │  │ Stock    │  │ Udhaar   │  │ GST Calc     │  │       │  (5 pgs) │
+  └─────────┘       │  │ Adjust   │  │ Ledger   │  │ Inv Deduct   │  │       └──────────┘
+                    │  └──────────┘  └──────────┘  └──────┬───────┘  │
+                    │                                     │           │
+                    │  ┌───────────────────────────────────▼────────┐ │
+                    │  │         Agent Pipeline (Redis-driven)      │ │
+                    │  │  ┌────────┐  ┌───────────┐  ┌─────────┐   │ │
+                    │  │  │Liaison │─►│Strategist │─►│ Auditor │   │ │
+                    │  │  └────────┘  └───────────┘  └─────────┘   │ │
+                    │  └────────────────────────────────────────────┘ │
+                    │                                                  │
+                    │  WhatsApp Webhook ◄──► Meta Cloud API            │
+                    └──────────────────────────────────────────────────┘
+```
 
 ## 🛠️ Technology Stack
 
 | Layer | Technology |
 |-------|-----------|
-| **Backend** | FastAPI (Python 3.12+) |
-| **Database** | PostgreSQL 15 with schema-level multi-tenancy |
-| **Queue** | Redis Streams (per-tenant namespaced) |
+| **API Framework** | FastAPI (Python 3.12+) — async, auto-docs, Pydantic v2 |
+| **Frontend** | Next.js 16 + Tailwind v4 + shadcn/ui |
+| **Database** | PostgreSQL 15 (multi-tenant) / SQLite (dev) |
+| **Auth** | JWT with refresh tokens, HTTP Bearer, RBAC |
+| **Queue** | Redis Streams (per-tenant namespaced, consumer groups) |
 | **STT** | OpenAI Whisper (CPU, Hinglish post-processing) |
-| **Dashboard** | Next.js 14 + shadcn/ui (analytics-only) |
 | **Monitoring** | Prometheus + Grafana + Alertmanager |
-| **CI/CD** | GitHub Actions (test → lint → security scan → deploy) |
+| **CI/CD** | GitHub Actions (lint → test → security scan → deploy) |
 | **Deployment** | Docker Compose / systemd |
 
 ---
@@ -111,10 +137,23 @@ No agent calls another directly. All communication is through `AgentMessage` obj
 
 | Decision | Why |
 |----------|-----|
-| **Headless (WhatsApp-first)** | Shop owners are on WhatsApp 8 hours/day. No app to install. Zero adoption friction. |
+| **WhatsApp-first, no native app** | Shop owners live on WhatsApp. Zero adoption friction. |
 | **PostgreSQL over NoSQL** | Financial ledger requires ACID. Udhaar entries must be atomic with inventory. |
-| **Redis Streams over Kafka** | Single VPS deployment. Kafka is overkill. Redis handles the throughput comfortably. |
-| **CPU-only Whisper** | 30s async transcription latency is acceptable. No GPU = deployable anywhere. |
+| **Redis Streams over Kafka** | Single ₹800/month VPS. Kafka is overkill. Redis handles comfortably. |
+| **Column snapshots in API responses** | Avoids SQLAlchemy async greenlet errors after `db.commit()` — all response data captured before commit. |
+| **CPU-only Whisper** | 30s async latency is acceptable for WhatsApp. No GPU = deployable anywhere. |
+
+---
+
+## 🔄 End-to-End Order Flow (Verified)
+
+```text
+POST /orders          → ORD-20260618-0012 created (status: pending)
+                      → Inventory deducted: SILK 6→5, PVC 36→34
+PUT /orders/{id}      → Status: confirmed
+PUT /orders/{id}      → Status: delivered, payment: paid
+DELETE /orders/{id}   → Cancelled, inventory restored: SILK 5→6, PVC 34→36
+```
 
 ---
 
@@ -122,14 +161,16 @@ No agent calls another directly. All communication is through `AgentMessage` obj
 
 | Feature | Status |
 |---------|--------|
-| Multi-agent pipeline (Liaison → Strategist → Auditor) | ✅ `v1.0.0` |
-| Whisper-Hinglish NLP pipeline | ✅ `v1.0.0` |
-| Multi-tenancy with isolated schemas | ✅ `v1.0.0` |
-| GST-compliant PDF invoicing | ✅ `v1.0.0` |
-| Docker + systemd deployment | ✅ `v1.0.0` |
-| CI/CD + Monitoring stack | ✅ `v1.0.0` |
-| Security audit (SOC 2 framework) | ✅ `v1.0.0` |
-| Owner analytics dashboard | 🔄 In progress |
+| Inventory & Customers CRUD | ✅ `v1.0.0` Live |
+| Orders CRUD + GST invoicing | ✅ `v1.0.0` Live |
+| Udhaar ledger & credit tracking | ✅ `v1.0.0` Live |
+| Analytics dashboard (5 pages) | ✅ `v1.0.0` Live |
+| Auth, RBAC, rate limiting | ✅ `v1.0.0` Live |
+| Multi-tenancy (schema isolation) | ✅ `v1.0.0` Live |
+| CI/CD + Monitoring stack | ✅ `v1.0.0` Live |
+| Multi-agent pipeline (Liaison → Strategist → Auditor) | ✅ `v1.0.0` Implemented (needs Redis) |
+| Whisper-Hinglish NLP pipeline | ✅ `v1.0.0` Implemented (needs API key) |
+| WhatsApp webhook integration | ✅ `v1.0.0` Handlers ready |
 | Image-based order parsing (photo → SKU) | 📋 Planned `v1.1` |
 | UPI payment link injection | 📋 Planned `v1.1` |
 | Fine-tuned Whisper for 8 regional accents | 📋 Planned `v1.2` |
