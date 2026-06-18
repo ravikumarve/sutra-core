@@ -285,6 +285,18 @@ class BaseAgent(ABC):
                 logger.error(f"Invalid message: {error_message}")
                 if message:
                     await self._handle_invalid_message(message, error_message)
+                # Always ACK and DLQ to unblock consumer group
+                await self.redis_manager.send_to_dead_letter_queue(
+                    tenant_id=self.tenant_id,
+                    message=data,
+                    error=error_message or "deserialization_failed"
+                )
+                await self.redis_manager.acknowledge_message(
+                    tenant_id=self.tenant_id,
+                    stream_type=self.agent_type.value,
+                    agent_name=self.agent_type.value,
+                    message_id=message_id
+                )
                 return
             
             # Check expiration

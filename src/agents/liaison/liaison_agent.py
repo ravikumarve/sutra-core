@@ -178,7 +178,9 @@ class LiaisonAgent(BaseAgent):
                     "entities": message.payload.get("entities", {}),
                     "confidence": message.payload.get("confidence", 0.0),
                     "sentiment": message.payload.get("sentiment"),
-                    "original_text": message.payload.get("original_text", "")
+                    "original_text": message.payload.get("original_text", ""),
+                    "is_valid": True,
+                    "reason": "Intent extracted successfully"
                 },
                 confidence=message.payload.get("confidence", 0.0)
             )

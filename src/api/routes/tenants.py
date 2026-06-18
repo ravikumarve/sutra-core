@@ -13,6 +13,7 @@ from src.api.schemas.common import (
     TenantInfo, TenantStatus
 )
 from src.agents.coordinator import agent_coordinator
+from datetime import datetime
 from src.security.auth import verify_token
 
 logger = logging.getLogger(__name__)
@@ -31,7 +32,7 @@ async def create_tenant(
     """
     try:
         # Verify token
-        user = await verify_token(credentials.credentials)
+        user = verify_token(credentials.credentials)
         
         # Generate tenant ID
         import uuid
@@ -85,7 +86,7 @@ async def get_tenant(
     """
     try:
         # Verify token
-        user = await verify_token(credentials.credentials)
+        user = verify_token(credentials.credentials)
         
         # Get tenant status
         status = await agent_coordinator.get_tenant_status(tenant_id)
@@ -120,7 +121,7 @@ async def update_tenant(
     """
     try:
         # Verify token
-        user = await verify_token(credentials.credentials)
+        user = verify_token(credentials.credentials)
         
         # Check if tenant exists
         status = await agent_coordinator.get_tenant_status(tenant_id)
@@ -154,7 +155,7 @@ async def delete_tenant(
     """
     try:
         # Verify token
-        user = await verify_token(credentials.credentials)
+        user = verify_token(credentials.credentials)
         
         # Deprovision tenant
         success = await agent_coordinator.deprovision_tenant(tenant_id)
@@ -188,7 +189,7 @@ async def list_tenants(
     """
     try:
         # Verify token
-        user = await verify_token(credentials.credentials)
+        user = verify_token(credentials.credentials)
         
         # Get all tenants
         tenants = await agent_coordinator.get_all_tenants()
@@ -224,7 +225,7 @@ async def get_tenant_status(
     """
     try:
         # Verify token
-        user = await verify_token(credentials.credentials)
+        user = verify_token(credentials.credentials)
         
         # Get tenant status
         status = await agent_coordinator.get_tenant_status(tenant_id)
@@ -255,7 +256,7 @@ async def restart_tenant_agents(
     """
     try:
         # Verify token
-        user = await verify_token(credentials.credentials)
+        user = verify_token(credentials.credentials)
         
         # Restart tenant agents
         success = await agent_coordinator.restart_tenant_agents(tenant_id)
@@ -285,7 +286,7 @@ async def get_system_status(
     """
     try:
         # Verify token
-        user = await verify_token(credentials.credentials)
+        user = verify_token(credentials.credentials)
         
         # Get system status
         status = await agent_coordinator.get_system_status()

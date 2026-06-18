@@ -133,22 +133,10 @@ class AgentCoordinator:
     async def _create_tenant_streams(self, tenant_id: str) -> None:
         """
         Create tenant-specific streams
+        Streams and consumer groups are created by agents on start().
+        This is a no-op to avoid duplicate _init messages.
         """
-        # Create streams for each agent type
-        for agent_type in AgentType:
-            await self.redis_manager.create_stream(
-                tenant_id=tenant_id,
-                stream_type=agent_type.value
-            )
-            
-            # Create consumer group
-            await self.redis_manager.create_consumer_group(
-                tenant_id=tenant_id,
-                stream_type=agent_type.value,
-                agent_name=agent_type.value
-            )
-        
-        logger.info(f"Created streams for tenant {tenant_id}")
+        logger.info(f"Streams will be created by agents for tenant {tenant_id}")
     
     async def _create_tenant_agents(
         self,

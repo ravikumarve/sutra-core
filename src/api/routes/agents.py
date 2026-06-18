@@ -33,7 +33,7 @@ async def get_agent_status(
     """
     try:
         # Verify token
-        user = await verify_token(credentials.credentials)
+        user = verify_token(credentials.credentials)
         
         # Get tenant status
         status = await agent_coordinator.get_tenant_status(tenant_id)
@@ -157,7 +157,7 @@ async def get_agent_metrics(
     """
     try:
         # Verify token
-        user = await verify_token(credentials.credentials)
+        user = verify_token(credentials.credentials)
         
         # Get tenant status
         status = await agent_coordinator.get_tenant_status(tenant_id)
