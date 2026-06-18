@@ -62,18 +62,20 @@
 
 ## 🖼️ Dashboard Preview
 
-| | |
-|:---|---:|
-| **🔐 Login** — WhatsApp number + password JWT auth | <img src="Sutra-Screens/Login.png" width="300" alt="Login" /> |
-| **📊 Overview** — KPI cards (orders, revenue, udhaar, low-stock) + recent orders table + inventory alerts | <img src="Sutra-Screens/Overview.png" width="300" alt="Overview" /> |
-| **📋 Orders** — Create, confirm, deliver, cancel with auto inventory sync and GST calculation | <img src="Sutra-Screens/Orders.png" width="300" alt="Orders" /> |
-| **📦 Inventory** — Full CRUD, stock adjustments, category filtering, low-stock alerts | <img src="Sutra-Screens/Inventory.png" width="300" alt="Inventory" /> |
-| **💳 Udhaar** — Credit ledger with balance tracking, customer debt overview | <img src="Sutra-Screens/Udhaar.png" width="300" alt="Udhaar" /> |
-| **🧾 Invoices** — GST-compliant invoice history, HSN-ready schema | <img src="Sutra-Screens/Invoices.png" width="300" alt="Invoices" /> |
-| **⚙️ Settings** — Profile management, integrations status | <img src="Sutra-Screens/Settings.png" width="300" alt="Settings" /> |
-
-> <img src="Sutra-Screens/Landing.png" width="700" alt="Landing Page" />
-> *The LP6-designed landing page — abyssal tech with emerald accents*
+<div align="center">
+  <table>
+    <tr>
+      <td align="center" width="33%"><img src="Sutra-Screens/Overview.png" width="260" alt="Overview" /><br><b>📊 Overview</b><br><sub>KPI cards, recent orders, stock alerts</sub></td>
+      <td align="center" width="33%"><img src="Sutra-Screens/Orders.png" width="260" alt="Orders" /><br><b>📋 Orders</b><br><sub>Order lifecycle + auto inventory sync</sub></td>
+      <td align="center" width="33%"><img src="Sutra-Screens/Inventory.png" width="260" alt="Inventory" /><br><b>📦 Inventory</b><br><sub>CRUD, categories, low-stock alerts</sub></td>
+    </tr>
+    <tr>
+      <td align="center" width="33%"><img src="Sutra-Screens/Udhaar.png" width="260" alt="Udhaar" /><br><b>💳 Udhaar</b><br><sub>Credit ledger & customer balances</sub></td>
+      <td align="center" width="33%"><img src="Sutra-Screens/Invoices.png" width="260" alt="Invoices" /><br><b>🧾 Invoices</b><br><sub>GST-compliant invoicing</sub></td>
+      <td align="center" width="33%"><img src="Sutra-Screens/Settings.png" width="260" alt="Settings" /><br><b>⚙️ Settings</b><br><sub>Profile & integrations</sub></td>
+    </tr>
+  </table>
+</div>
 
 ---
 
