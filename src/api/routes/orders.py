@@ -50,7 +50,10 @@ async def _get_order(order_id: str, tenant_id: str, db: AsyncSession) -> Order:
 
     result = await db.execute(
         select(Order)
-        .options(selectinload(Order.items).selectinload(OrderItem.inventory))
+        .options(
+            selectinload(Order.items).selectinload(OrderItem.inventory),
+            selectinload(Order.customer),
+        )
         .where(
             and_(
                 Order.id == order_uuid,
@@ -64,37 +67,14 @@ async def _get_order(order_id: str, tenant_id: str, db: AsyncSession) -> Order:
     return order
 
 
-def _order_to_response(order: Order) -> OrderResponse:
-    """Convert ORM order to response with customer info"""
-    customer_name = None
-    customer_phone = None
-    if order.customer:
-        customer_name = order.customer.name
-        customer_phone = order.customer.phone_number
-
-    items = None
-    if order.items:
-        items = [
-            OrderItemResponse(
-                id=str(item.id),
-                inventory_id=str(item.inventory_id),
-                sku=item.inventory.sku if item.inventory else None,
-                product_name=item.inventory.name if item.inventory else None,
-                quantity=item.quantity,
-                unit_price=float(item.unit_price),
-                gst_rate=float(item.gst_rate),
-                gst_amount=float(item.gst_amount),
-                total_amount=float(item.total_amount),
-            )
-            for item in order.items
-        ]
-
+def _order_to_list_response(order: Order) -> OrderResponse:
+    """Convert ORM order to response for list views (no items — avoids lazy-load)"""
     return OrderResponse(
         id=str(order.id),
         tenant_id=str(order.tenant_id),
         customer_id=str(order.customer_id) if order.customer_id else None,
-        customer_name=customer_name,
-        customer_phone=customer_phone,
+        customer_name=order.customer.name if order.customer else None,
+        customer_phone=order.customer.phone_number if order.customer else None,
         order_number=order.order_number,
         order_date=order.order_date,
         total_amount=float(order.total_amount),
@@ -109,8 +89,29 @@ def _order_to_response(order: Order) -> OrderResponse:
         source=order.source,
         created_at=order.created_at,
         updated_at=order.updated_at,
-        items=items,
+        items=None,
     )
+
+
+def _order_to_response(order: Order) -> OrderResponse:
+    """Convert ORM order to response WITH items (caller must eager-load)"""
+    resp = _order_to_list_response(order)
+    if order.items:
+        resp.items = [
+            OrderItemResponse(
+                id=str(item.id),
+                inventory_id=str(item.inventory_id),
+                sku=item.inventory.sku if item.inventory else None,
+                product_name=item.inventory.name if item.inventory else None,
+                quantity=item.quantity,
+                unit_price=float(item.unit_price),
+                gst_rate=float(item.gst_rate),
+                gst_amount=float(item.gst_amount),
+                total_amount=float(item.total_amount),
+            )
+            for item in order.items
+        ]
+    return resp
 
 
 async def _generate_order_number(tenant_id: str, db: AsyncSession) -> str:
@@ -189,7 +190,7 @@ async def list_orders(
         return BaseResponse(
             success=True,
             data={
-                "items": [_order_to_response(o) for o in orders],
+                "items": [_order_to_list_response(o) for o in orders],
                 "total": total,
                 "limit": limit,
                 "offset": offset,
@@ -383,19 +384,44 @@ async def update_order(
         tenant_id = _get_tenant_id(credentials)
         order = await _get_order(order_id, tenant_id, db)
 
+        # Snapshot ALL response fields BEFORE commit (avoids lazy-load after commit)
+        response_data = dict(
+            id=str(order.id),
+            tenant_id=str(order.tenant_id),
+            customer_id=str(order.customer_id) if order.customer_id else None,
+            customer_name=order.customer.name if order.customer else None,
+            customer_phone=order.customer.phone_number if order.customer else None,
+            order_number=order.order_number,
+            order_date=order.order_date,
+            total_amount=float(order.total_amount),
+            total_gst=float(order.total_gst),
+            discount_amount=float(order.discount_amount),
+            payment_method=order.payment_method,
+            payment_status=order.payment_status,
+            is_credit=order.is_credit,
+            credit_amount=float(order.credit_amount),
+            status=order.status,
+            notes=order.notes,
+            source=order.source,
+            created_at=order.created_at,
+            updated_at=order.updated_at,
+        )
+
         update_data = request.model_dump(exclude_unset=True)
         for field, value in update_data.items():
             setattr(order, field, value)
+            # Also update snapshot
+            if field in response_data:
+                response_data[field] = value
 
         await db.commit()
 
-        # Reload
-        order = await _get_order(order_id, tenant_id, db)
+        response_data["updated_at"] = datetime.utcnow()
 
         return BaseResponse(
             success=True,
             message="Order updated",
-            data={"order": _order_to_response(order)},
+            data={"order": OrderResponse(**response_data)},
         )
 
     except HTTPException:

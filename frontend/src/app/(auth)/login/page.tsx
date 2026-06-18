@@ -8,7 +8,7 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") || "/dashboard";
 
-  const [email, setEmail] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -24,7 +24,7 @@ function LoginForm() {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
+          body: JSON.stringify({ phone_number: phoneNumber, password }),
         }
       );
 
@@ -34,7 +34,7 @@ function LoginForm() {
       }
 
       const data = await res.json();
-      document.cookie = `sutra_token=${data.access_token}; path=/; max-age=86400; samesite=strict`;
+      document.cookie = `sutra_token=${data.data?.access_token || data.access_token}; path=/; max-age=86400; samesite=strict`;
       router.push(redirect);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
@@ -72,15 +72,15 @@ function LoginForm() {
           )}
 
           <div className="space-y-2">
-            <label htmlFor="email" className="font-mono text-xs text-text-muted uppercase tracking-wider">
-              Email
+            <label htmlFor="phone" className="font-mono text-xs text-text-muted uppercase tracking-wider">
+              WhatsApp Number
             </label>
             <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
+              id="phone"
+              type="tel"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              placeholder="+919876543210"
               required
               className="w-full bg-bg-void border border-border-dim rounded-lg px-4 py-3 text-text-main text-sm font-light placeholder:text-text-faint outline-none transition-colors focus:border-emerald focus:ring-1 focus:ring-emerald/30"
             />
@@ -118,7 +118,7 @@ function LoginForm() {
         </form>
 
         <p className="text-center text-text-faint text-xs mt-6 font-mono">
-          Demo: admin@sutra.local / password123
+          Demo: +919876543210 / password123
         </p>
       </div>
     </div>

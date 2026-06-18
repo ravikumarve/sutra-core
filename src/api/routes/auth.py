@@ -20,7 +20,7 @@ from src.config.settings import settings
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/auth", tags=["authentication"])
+router = APIRouter(tags=["Authentication"])
 security = HTTPBearer()
 
 

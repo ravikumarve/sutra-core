@@ -76,7 +76,7 @@ class Settings(BaseSettings):
     
     # Rate Limiting
     rate_limit_enabled: bool = Field(default=True, env="RATE_LIMIT_ENABLED")
-    rate_limit_requests: int = Field(default=100, env="RATE_LIMIT_REQUESTS")
+    rate_limit_requests: int = Field(default=10000, env="RATE_LIMIT_REQUESTS")
     rate_limit_period: int = Field(default=60, env="RATE_LIMIT_PERIOD")
     
     # Encryption
@@ -349,8 +349,13 @@ class Settings(BaseSettings):
     
     @property
     def database_url_async(self) -> str:
-        """Get async database URL"""
-        return self.database_url.replace("postgresql://", "postgresql+asyncpg://")
+        """Get async database URL (handles both PostgreSQL and SQLite)"""
+        url = self.database_url
+        if url.startswith("postgresql://"):
+            return url.replace("postgresql://", "postgresql+asyncpg://")
+        if url.startswith("sqlite://"):
+            return url.replace("sqlite://", "sqlite+aiosqlite://", 1)
+        return url
     
     class Config:
         env_file = ".env"

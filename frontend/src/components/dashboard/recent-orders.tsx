@@ -1,53 +1,49 @@
-const orders = [
-  {
-    id: "#INV-0042",
-    customer: "Sharma Textiles",
-    items: "50x Silk Saree (Red)",
-    amount: "₹1,24,500",
-    status: "completed",
-    time: "2 min ago",
-  },
-  {
-    id: "#INV-0041",
-    customer: "Gupta Kirana Store",
-    items: "25kg Basmati Rice, 10L Oil",
-    amount: "₹3,850",
-    status: "completed",
-    time: "15 min ago",
-  },
-  {
-    id: "#INV-0040",
-    customer: "Patel Hardware",
-    items: "100x PVC Pipe 1inch",
-    amount: "₹8,200",
-    status: "processing",
-    time: "42 min ago",
-  },
-  {
-    id: "#INV-0039",
-    customer: "Singh Electronics",
-    items: "5x LED Bulb 12W",
-    amount: "₹2,250",
-    status: "pending",
-    time: "1 hr ago",
-  },
-  {
-    id: "#INV-0038",
-    customer: "Verma Fabrics",
-    items: "20m Cotton (Blue), 15m Polyester",
-    amount: "₹11,300",
-    status: "completed",
-    time: "2 hr ago",
-  },
-];
+"use client";
+
+import type { RecentOrder } from "@/lib/api";
+
+interface Props {
+  orders: RecentOrder[];
+  loading: boolean;
+}
 
 const statusStyles: Record<string, string> = {
-  completed: "bg-emerald-dim text-emerald border-emerald/20",
+  confirmed: "bg-emerald-dim text-emerald border-emerald/20",
+  delivered: "bg-emerald-dim text-emerald border-emerald/20",
   processing: "bg-[rgba(0,240,255,0.08)] text-cyan-400 border-cyan-400/20",
   pending: "bg-[rgba(245,158,11,0.08)] text-amber-400 border-amber-400/20",
+  cancelled: "bg-[rgba(239,68,68,0.08)] text-red-400 border-red-400/20",
 };
 
-export function RecentOrders() {
+function formatCurrency(n: number): string {
+  return `₹${n.toLocaleString("en-IN")}`;
+}
+
+function timeAgo(dateStr: string | null): string {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return "Just now";
+  if (mins < 60) return `${mins} min ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs} hr ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d ago`;
+}
+
+function Skeleton() {
+  return (
+    <div className="space-y-3 p-6">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <div key={i} className="h-10 bg-bg-panel rounded animate-pulse" />
+      ))}
+    </div>
+  );
+}
+
+export function RecentOrders({ orders, loading }: Props) {
   return (
     <div className="bg-bg-surface border border-border-dim rounded-xl overflow-hidden">
       <div className="px-6 py-5 border-b border-border-dim flex items-center justify-between">
@@ -57,51 +53,62 @@ export function RecentOrders() {
         </a>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border-dim">
-              <th className="text-left px-6 py-3.5 font-mono text-[0.65rem] text-text-faint uppercase tracking-wider">
-                Order
-              </th>
-              <th className="text-left px-6 py-3.5 font-mono text-[0.65rem] text-text-faint uppercase tracking-wider">
-                Customer
-              </th>
-              <th className="text-left px-6 py-3.5 font-mono text-[0.65rem] text-text-faint uppercase tracking-wider max-md:hidden">
-                Items
-              </th>
-              <th className="text-right px-6 py-3.5 font-mono text-[0.65rem] text-text-faint uppercase tracking-wider">
-                Amount
-              </th>
-              <th className="text-right px-6 py-3.5 font-mono text-[0.65rem] text-text-faint uppercase tracking-wider">
-                Status
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {orders.map((order) => (
-              <tr
-                key={order.id}
-                className="border-b border-border-dim last:border-b-0 hover:bg-bg-panel/50 transition-colors"
-              >
-                <td className="px-6 py-4 font-mono text-text-main text-xs">{order.id}</td>
-                <td className="px-6 py-4 text-text-main">{order.customer}</td>
-                <td className="px-6 py-4 text-text-muted text-xs max-md:hidden">{order.items}</td>
-                <td className="px-6 py-4 text-right font-mono text-text-main text-sm">{order.amount}</td>
-                <td className="px-6 py-4 text-right">
-                  <span
-                    className={`inline-block px-2.5 py-1 rounded-full text-[0.65rem] font-mono font-medium border ${
-                      statusStyles[order.status]
-                    }`}
-                  >
-                    {order.status}
-                  </span>
-                </td>
+      {loading ? (
+        <Skeleton />
+      ) : orders.length === 0 ? (
+        <div className="px-6 py-10 text-center text-text-muted text-sm">
+          No orders yet. Orders will appear here once customers start placing them via WhatsApp.
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border-dim">
+                <th className="text-left px-6 py-3.5 font-mono text-[0.65rem] text-text-faint uppercase tracking-wider">
+                  Order
+                </th>
+                <th className="text-left px-6 py-3.5 font-mono text-[0.65rem] text-text-faint uppercase tracking-wider">
+                  Customer
+                </th>
+                <th className="text-right px-6 py-3.5 font-mono text-[0.65rem] text-text-faint uppercase tracking-wider">
+                  Amount
+                </th>
+                <th className="text-right px-6 py-3.5 font-mono text-[0.65rem] text-text-faint uppercase tracking-wider">
+                  Status
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {orders.map((order) => (
+                <tr
+                  key={order.id}
+                  className="border-b border-border-dim last:border-b-0 hover:bg-bg-panel/50 transition-colors"
+                >
+                  <td className="px-6 py-4 font-mono text-text-main text-xs">
+                    {order.order_number}
+                  </td>
+                  <td className="px-6 py-4 text-text-main">{order.customer_name}</td>
+                  <td className="px-6 py-4 text-right font-mono text-text-main text-sm">
+                    {formatCurrency(order.total_amount)}
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <span
+                      className={`inline-block px-2.5 py-1 rounded-full text-[0.65rem] font-mono font-medium border ${
+                        statusStyles[order.status] || "bg-text-muted/10 text-text-muted"
+                      }`}
+                    >
+                      {order.status}
+                    </span>
+                    <div className="text-[0.6rem] text-text-faint mt-0.5">
+                      {timeAgo(order.created_at)}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

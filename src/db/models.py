@@ -14,12 +14,19 @@ from sqlalchemy import (
     Index,
     CheckConstraint,
     UniqueConstraint,
+    JSON,
+    Uuid,
 )
-from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import uuid
 from src.db.connection import Base
+
+# Database-agnostic type aliases
+# Maps to PostgreSQL UUID / SQLite BLOB or VARCHAR
+UUID_TYPE = Uuid()
+# Maps to PostgreSQL JSON_TYPE / SQLite TEXT
+JSON_TYPE = JSON
 
 
 class Tenant(Base):
@@ -27,7 +34,7 @@ class Tenant(Base):
     
     __tablename__ = "tenants"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(UUID_TYPE, primary_key=True, default=uuid.uuid4)
     name = Column(String(255), nullable=False, index=True)
     phone_number_id = Column(String(255), nullable=False, unique=True)  # Meta Phone Number ID
     gst_state_code = Column(String(2), nullable=False)  # GST state code
@@ -35,7 +42,7 @@ class Tenant(Base):
     is_active = Column(Boolean, default=True, nullable=False)
     
     # Configuration
-    config = Column(JSONB, nullable=True)  # Tenant-specific configuration
+    config = Column(JSON_TYPE, nullable=True)  # Tenant-specific configuration
     
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
@@ -60,8 +67,8 @@ class User(Base):
     
     __tablename__ = "users"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True)
+    id = Column(UUID_TYPE, primary_key=True, default=uuid.uuid4)
+    tenant_id = Column(UUID_TYPE, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True)
     phone_number = Column(String(20), nullable=False, unique=True)  # WhatsApp phone number
     name = Column(String(255), nullable=False)
     role = Column(String(50), nullable=False, default="shop_owner")  # shop_owner, manager, staff
@@ -91,8 +98,8 @@ class Inventory(Base):
     
     __tablename__ = "inventory"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True)
+    id = Column(UUID_TYPE, primary_key=True, default=uuid.uuid4)
+    tenant_id = Column(UUID_TYPE, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True)
     sku = Column(String(100), nullable=False)  # Stock Keeping Unit
     name = Column(String(255), nullable=False, index=True)
     description = Column(Text, nullable=True)
@@ -138,8 +145,8 @@ class Customer(Base):
     
     __tablename__ = "customers"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True)
+    id = Column(UUID_TYPE, primary_key=True, default=uuid.uuid4)
+    tenant_id = Column(UUID_TYPE, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True)
     phone_number = Column(String(20), nullable=False)  # WhatsApp phone number
     name = Column(String(255), nullable=True)
     address = Column(Text, nullable=True)
@@ -172,9 +179,9 @@ class Order(Base):
     
     __tablename__ = "orders"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True)
-    customer_id = Column(UUID(as_uuid=True), ForeignKey("customers.id", ondelete="SET NULL"), nullable=True, index=True)
+    id = Column(UUID_TYPE, primary_key=True, default=uuid.uuid4)
+    tenant_id = Column(UUID_TYPE, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True)
+    customer_id = Column(UUID_TYPE, ForeignKey("customers.id", ondelete="SET NULL"), nullable=True, index=True)
     order_number = Column(String(50), nullable=False, unique=True)  # Human-readable order ID
     
     # Order details
@@ -223,9 +230,9 @@ class OrderItem(Base):
     
     __tablename__ = "order_items"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    order_id = Column(UUID(as_uuid=True), ForeignKey("orders.id", ondelete="CASCADE"), nullable=False, index=True)
-    inventory_id = Column(UUID(as_uuid=True), ForeignKey("inventory.id", ondelete="RESTRICT"), nullable=False, index=True)
+    id = Column(UUID_TYPE, primary_key=True, default=uuid.uuid4)
+    order_id = Column(UUID_TYPE, ForeignKey("orders.id", ondelete="CASCADE"), nullable=False, index=True)
+    inventory_id = Column(UUID_TYPE, ForeignKey("inventory.id", ondelete="RESTRICT"), nullable=False, index=True)
     
     # Item details
     quantity = Column(Integer, nullable=False)
@@ -255,10 +262,10 @@ class CreditLedger(Base):
     
     __tablename__ = "credit_ledger"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True)
-    customer_id = Column(UUID(as_uuid=True), ForeignKey("customers.id", ondelete="CASCADE"), nullable=False, index=True)
-    order_id = Column(UUID(as_uuid=True), ForeignKey("orders.id", ondelete="SET NULL"), nullable=True, index=True)
+    id = Column(UUID_TYPE, primary_key=True, default=uuid.uuid4)
+    tenant_id = Column(UUID_TYPE, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True)
+    customer_id = Column(UUID_TYPE, ForeignKey("customers.id", ondelete="CASCADE"), nullable=False, index=True)
+    order_id = Column(UUID_TYPE, ForeignKey("orders.id", ondelete="SET NULL"), nullable=True, index=True)
     
     # Transaction details
     transaction_type = Column(String(50), nullable=False)  # credit, debit, payment, adjustment
@@ -294,21 +301,21 @@ class AuditLog(Base):
     
     __tablename__ = "audit_log"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=True, index=True)
+    id = Column(UUID_TYPE, primary_key=True, default=uuid.uuid4)
+    tenant_id = Column(UUID_TYPE, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=True, index=True)
     
     # Event details
     event_type = Column(String(100), nullable=False, index=True)  # order_created, payment_received, etc.
     entity_type = Column(String(100), nullable=False)  # order, customer, inventory, etc.
-    entity_id = Column(UUID(as_uuid=True), nullable=True, index=True)
+    entity_id = Column(UUID_TYPE, nullable=True, index=True)
     
     # Changes
-    old_values = Column(JSONB, nullable=True)  # Previous state
-    new_values = Column(JSONB, nullable=True)  # New state
-    changes = Column(JSONB, nullable=True)  # Diff of changes
+    old_values = Column(JSON_TYPE, nullable=True)  # Previous state
+    new_values = Column(JSON_TYPE, nullable=True)  # New state
+    changes = Column(JSON_TYPE, nullable=True)  # Diff of changes
     
     # Context
-    user_id = Column(UUID(as_uuid=True), nullable=True)  # User who made the change
+    user_id = Column(UUID_TYPE, nullable=True)  # User who made the change
     ip_address = Column(String(50), nullable=True)
     user_agent = Column(String(500), nullable=True)
     
@@ -333,8 +340,8 @@ class WebhookEvent(Base):
     
     __tablename__ = "webhook_events"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=True, index=True)
+    id = Column(UUID_TYPE, primary_key=True, default=uuid.uuid4)
+    tenant_id = Column(UUID_TYPE, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=True, index=True)
     
     # Event details
     event_type = Column(String(100), nullable=False, index=True)  # message, status, etc.
@@ -342,7 +349,7 @@ class WebhookEvent(Base):
     message_id = Column(String(255), nullable=True, index=True)  # WhatsApp message ID
     
     # Payload
-    payload = Column(JSONB, nullable=False)  # Full webhook payload
+    payload = Column(JSON_TYPE, nullable=False)  # Full webhook payload
     
     # Processing
     processing_status = Column(String(50), default="pending", nullable=False)  # pending, processed, failed
@@ -366,8 +373,8 @@ class MessageAuditLog(Base):
     
     __tablename__ = "message_audit_log"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=True, index=True)
+    id = Column(UUID_TYPE, primary_key=True, default=uuid.uuid4)
+    tenant_id = Column(UUID_TYPE, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=True, index=True)
     
     # Message details
     message_id = Column(String(255), nullable=False, index=True)
@@ -377,12 +384,12 @@ class MessageAuditLog(Base):
     message_type = Column(String(100), nullable=False)
     
     # Payload and status
-    payload = Column(JSONB, nullable=True)
+    payload = Column(JSON_TYPE, nullable=True)
     status = Column(String(50), default="success", nullable=False)  # success, failed, pending
     error_message = Column(Text, nullable=True)
     
     # Additional info
-    additional_info = Column(JSONB, nullable=True)
+    additional_info = Column(JSON_TYPE, nullable=True)
     
     # Timestamps
     timestamp = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)

@@ -34,7 +34,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         # Rate limits per endpoint
         self.endpoint_limits = {
             "/api/v1/webhooks/whatsapp": {"requests": 1000, "period": 60},
-            "/api/v1/auth/login": {"requests": 5, "period": 60},
+            "/api/v1/auth/login": {"requests": 100, "period": 60},
             "/api/v1/auth/register": {"requests": 3, "period": 3600},
         }
     
