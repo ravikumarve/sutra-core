@@ -29,6 +29,7 @@ class TestAgentCommunication:
         coordinator.redis_manager.connect = AsyncMock()
         coordinator.redis_manager.create_stream = AsyncMock(return_value=True)
         coordinator.redis_manager.create_consumer_group = AsyncMock(return_value=True)
+        coordinator.redis_manager.cleanup_old_messages = AsyncMock(return_value=0)
         
         await coordinator.start()
         yield coordinator
@@ -116,7 +117,9 @@ class TestAgentCommunication:
             payload={
                 "intent": "order",
                 "entities": {"product": "shirt", "quantity": 2},
-                "confidence": 0.9
+                "confidence": 0.9,
+                "is_valid": True,
+                "reason": "Intent extracted successfully"
             },
             confidence=0.9
         )
@@ -182,7 +185,7 @@ class TestAgentCommunication:
         whatsapp_message = AgentMessage(
             tenant_id="test_tenant",
             source_agent=AgentType.LIAISON,
-            message_type=MessageType.INTENT_EXTRACTED,
+            message_type=MessageType.TEXT,
             payload={
                 "text": "I want to order 2 shirts",
                 "phone_number": "+919876543210"
@@ -192,7 +195,7 @@ class TestAgentCommunication:
         
         liaison_response = await liaison.process_message(whatsapp_message)
         
-        # Verify Liaison response
+        # Verify Liaison returns INTENT_EXTRACTED (processed from raw TEXT)
         assert liaison_response is not None
         assert liaison_response.message_type == MessageType.INTENT_EXTRACTED
         
@@ -321,7 +324,7 @@ class TestMessageValidation:
         message = AgentMessage(
             tenant_id="test_tenant",
             source_agent=AgentType.LIAISON,
-            message_type=MessageType.INTENT_EXTRACTED,
+            message_type=MessageType.TEXT,
             payload={"text": "Hello"},
             confidence=0.9
         )
@@ -338,13 +341,17 @@ class TestMessageValidation:
         from src.agents.messages.message_schema import MessageValidator
         from datetime import timedelta
         
+        # expires_at must be AFTER timestamp (validator), but BEFORE now (for is_expired)
+        two_hours_ago = datetime.utcnow() - timedelta(hours=2)
+        one_hour_ago = datetime.utcnow() - timedelta(hours=1)
         message = AgentMessage(
             tenant_id="test_tenant",
             source_agent=AgentType.LIAISON,
-            message_type=MessageType.INTENT_EXTRACTED,
+            message_type=MessageType.TEXT,
             payload={"text": "Hello"},
             confidence=0.9,
-            expires_at=datetime.utcnow() - timedelta(hours=1)
+            timestamp=two_hours_ago,
+            expires_at=one_hour_ago  # expired since now > one_hour_ago
         )
         
         validator = MessageValidator()
@@ -361,7 +368,7 @@ class TestMessageValidation:
         message = AgentMessage(
             tenant_id="test_tenant",
             source_agent=AgentType.LIAISON,
-            message_type=MessageType.INTENT_EXTRACTED,
+            message_type=MessageType.TEXT,
             payload={"text": "Hello"},
             confidence=0.1
         )
@@ -378,7 +385,7 @@ class TestMessageValidation:
         message = AgentMessage(
             tenant_id="test_tenant",
             source_agent=AgentType.LIAISON,
-            message_type=MessageType.INTENT_EXTRACTED,
+            message_type=MessageType.TEXT,
             payload={"text": "Hello"},
             confidence=0.9
         )

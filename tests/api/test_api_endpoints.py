@@ -193,7 +193,7 @@ class TestTenantAPIEndpoints:
                 # Make request
                 request_data = {
                     "name": "Test Business",
-                    "phone_number_id": "987654321",
+                    "phone_number_id": "9876543210",
                     "gst_state_code": 24,
                     "industry": "textiles"
                 }

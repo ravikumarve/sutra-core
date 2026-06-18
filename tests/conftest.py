@@ -260,12 +260,13 @@ async def setup_test_environment():
     from src.db.connection import init_database, close_database
     import os
     
-    # Set test environment variables
+    # Set test environment variables (SQLite for dev/CI, no PostgreSQL required)
     os.environ["ENVIRONMENT"] = "test"
-    os.environ["DATABASE_URL"] = "postgresql+asyncpg://sutra_test:test_password@localhost:5432/sutra_test_db"
+    os.environ["DATABASE_URL"] = "sqlite:///./test_sutra.db"
     os.environ["REDIS_URL"] = "redis://localhost:6379/1"
     os.environ["SECRET_KEY"] = "test-secret-key-for-testing-only"
     os.environ["TEST_MODE"] = "true"
+    os.environ["AUDIT_LOGGING_ENABLED"] = "false"
     
     # Initialize test database
     await init_database(test_mode=True)
@@ -286,13 +287,17 @@ async def reset_state():
     
     # Reset database state
     async with db_manager.get_session() as session:
-        # Reset sequences
-        await session.execute(text("SELECT setval('tenants_id_seq', 1, false)"))
-        await session.execute(text("SELECT setval('users_id_seq', 1, false)"))
-        await session.execute(text("SELECT setval('inventory_id_seq', 1, false)"))
-        await session.execute(text("SELECT setval('customers_id_seq', 1, false)"))
-        await session.execute(text("SELECT setval('orders_id_seq', 1, false)"))
-        await session.execute(text("SELECT setval('credit_ledger_id_seq', 1, false)"))
+        # Truncate all tables (works for both SQLite and PostgreSQL)
+        import sqlalchemy as sa
+        conn = await session.connection()
+        dialect = conn.dialect.name
+        if dialect == "postgresql":
+            await session.execute(text("SELECT setval('tenants_id_seq', 1, false)"))
+            await session.execute(text("SELECT setval('users_id_seq', 1, false)"))
+            await session.execute(text("SELECT setval('inventory_id_seq', 1, false)"))
+            await session.execute(text("SELECT setval('customers_id_seq', 1, false)"))
+            await session.execute(text("SELECT setval('orders_id_seq', 1, false)"))
+            await session.execute(text("SELECT setval('credit_ledger_id_seq', 1, false)"))
         await session.commit()
     
     # Reset Redis state (if Redis is available)

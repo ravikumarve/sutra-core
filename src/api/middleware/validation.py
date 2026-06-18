@@ -483,7 +483,15 @@ class ValidationMiddleware(BaseHTTPMiddleware):
             "/docs",
             "/openapi.json",
             "/redoc",
+            "/api/v1/agents/restart",
+            "/api/v1/tenants/system/status",
         }
+        # Skip body validation for POST/PUT/PATCH requests without a JSON body
+        # (bodyless POST endpoints like /restart should not fail validation)
+        if request.method in ["POST", "PUT", "PATCH"]:
+            content_type = request.headers.get("content-type", "")
+            if not content_type or "application/json" not in content_type:
+                return await call_next(request)
         
         if any(request.url.path.startswith(route) for route in skip_routes):
             return await call_next(request)

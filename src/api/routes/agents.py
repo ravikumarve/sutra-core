@@ -77,7 +77,7 @@ async def send_agent_message(
     """
     try:
         # Verify token
-        user = await verify_token(credentials.credentials)
+        user = verify_token(credentials.credentials)
         
         # Validate agent type
         try:
@@ -123,7 +123,7 @@ async def restart_agent(
     """
     try:
         # Verify token
-        user = await verify_token(credentials.credentials)
+        user = verify_token(credentials.credentials)
         
         # Restart tenant agents
         success = await agent_coordinator.restart_tenant_agents(tenant_id)
@@ -209,7 +209,7 @@ async def get_agent_logs(
     """
     try:
         # Verify token
-        user = await verify_token(credentials.credentials)
+        user = verify_token(credentials.credentials)
         
         # TODO: Implement actual log retrieval
         # For now, return placeholder data
@@ -252,7 +252,7 @@ async def cleanup_agent_messages(
     """
     try:
         # Verify token
-        user = await verify_token(credentials.credentials)
+        user = verify_token(credentials.credentials)
         
         # Cleanup old messages
         cleaned = await agent_coordinator.cleanup_old_messages(

@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SUTRA Core | Headless Multi-Agent ERP Engine</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Abyssal Tech Palette */
+            --bg-void: #020204;
+            --bg-surface: #07080f;
+            --bg-panel: #0c0e17;
+            --bg-glass: rgba(7, 8, 15, 0.4);
+            
+            --border-dim: rgba(255, 255, 255, 0.05);
+            --border-glow: rgba(0, 230, 118, 0.15);
+            --grid-line: rgba(255, 255, 255, 0.02);
+            
+            /* High-End Deep Tech Accents */
+            --emerald: #00e676; /* WhatsApp Neon Green */
+            --emerald-dim: rgba(0, 230, 118, 0.08);
+            --titanium: #f8fafc;
+            --text-main: #ffffff;
+            --text-muted: #94a3b8;
+            --text-faint: #334155;
+            
+            --font-display: 'Plus Jakarta Sans', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; scroll-behavior: smooth; }
+
+        body {
+            background-color: var(--bg-void);
+            color: var(--text-main);
+            font-family: var(--font-display);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* 1. Lusion 3D Interactive Attractor Point Cloud */
+        #swarm-canvas {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 0; pointer-events: none; opacity: 0.75;
+        }
+
+        /* 2. Technical Dot-Matrix Grid Mask */
+        .dot-matrix-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 1; pointer-events: none;
+            background-image: radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+            background-size: 25px 30px;
+            mask-image: radial-gradient(circle at 50% 30%, black 20%, transparent 85%);
+            -webkit-mask-image: radial-gradient(circle at 50% 30%, black 20%, transparent 85%);
+        }
+
+        /* Ambient Space Glow */
+        .ambient-core {
+            position: absolute; top: -20vh; left: 50%; transform: translateX(-50%);
+            width: 70vw; height: 60vh;
+            background: radial-gradient(ellipse at center, rgba(0, 230, 118, 0.06), transparent 70%);
+            z-index: 0; pointer-events: none; filter: blur(80px);
+        }
+
+        /* Typography Base */
+        h1, h2, h3, h4 { font-weight: 700; letter-spacing: -0.04em; line-height: 1.1; color: var(--titanium); }
+        .mono { font-family: var(--font-mono); }
+        .text-aurora { color: var(--emerald); text-shadow: 0 0 25px rgba(0, 230, 118, 0.3); }
+        .text-gradient {
+            background: linear-gradient(180deg, #fff 0%, var(--text-muted) 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        /* Structural Layout */
+        .container { max-width: 1240px; margin: 0 auto; padding: 0 2rem; position: relative; z-index: 10; }
+        section { padding: 8rem 0; border-bottom: 1px solid var(--border-dim); }
+
+        /* --- 1. NAVIGATION BAR --- */
+        nav {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 2rem 0; border-bottom: 1px solid var(--border-dim);
+            position: relative; z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.25rem; font-weight: 700; color: var(--text-main);
+            text-decoration: none; display: flex; align-items: center; gap: 12px;
+            letter-spacing: -0.5px;
+        }
+        .logo-glyph { width: 14px; height: 14px; border: 2px solid var(--emerald); border-radius: 50%; box-shadow: 0 0 10px var(--emerald-dim); }
+
+        .nav-links { display: flex; gap: 3.5rem; }
+        .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 0.85rem; font-weight: 500; transition: color 0.3s; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.5px;}
+        .nav-links a:hover { color: var(--text-main); }
+
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 0.75rem 2rem; font-family: var(--font-mono); font-size: 0.8rem;
+            text-transform: uppercase; letter-spacing: 1px; border-radius: 100px;
+            text-decoration: none; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            cursor: pointer; border: 1px solid transparent;
+        }
+        .btn-primary { background: var(--titanium); color: var(--bg-void); }
+        .btn-primary:hover { background: transparent; color: var(--titanium); border-color: var(--titanium); transform: translateY(-2px); }
+        
+        .btn-outline { background: rgba(255,255,255,0.02); color: var(--text-muted); border-color: var(--border-dim); backdrop-filter: blur(10px); }
+        .btn-outline:hover { border-color: var(--emerald); color: var(--emerald); background: var(--emerald-dim); }
+
+        /* --- 2. HERO SECTION (DUAL VISUAL) --- */
+        .hero { min-height: 85vh; display: grid; grid-template-columns: 1fr 1.1fr; gap: 4rem; align-items: center; }
+        .hero-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 0.4rem 1.2rem; background: var(--bg-panel);
+            border: 1px solid var(--border-dim); color: var(--text-muted);
+            font-size: 0.75rem; font-family: var(--font-mono); margin-bottom: 2.5rem; border-radius: 4px;
+        }
+
+        .hero h1 { font-size: clamp(3rem, 5vw, 4.5rem); margin-bottom: 2rem; }
+        .hero p { font-size: 1.15rem; color: var(--text-muted); max-width: 520px; line-height: 1.7; margin-bottom: 3.5rem; font-weight: 300; }
+
+        .dual-viewport { display: flex; align-items: center; justify-content: flex-end; position: relative; width: 100%; }
+        .glass-pane {
+            background: var(--bg-glass); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+            border: 1px solid var(--border-dim); box-shadow: 0 50px 100px rgba(0,0,0,0.6);
+            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* Left Visual: WhatsApp Mockup */
+        .wa-mockup {
+            width: 250px; border-radius: 20px; padding: 1.25rem;
+            position: absolute; left: -20px; z-index: 3; transform: rotate(-4deg);
+        }
+        
+        @media (hover: hover) {
+            .wa-mockup:hover { transform: rotate(0deg) translateY(-10px); z-index: 5; border-color: var(--border-glow); }
+        }
+        
+        .wa-header { display: flex; align-items: center; gap: 8px; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-dim); padding-bottom: 0.5rem; font-size: 0.85rem; font-weight: 600;}
+        .wa-bubble-in { background: #075E54; padding: 0.75rem; border-radius: 12px 12px 0 12px; font-size: 0.8rem; margin-bottom: 1rem; margin-left: auto; width: 85%; }
+        .wa-bubble-out { background: var(--bg-surface); border: 1px solid var(--border-dim); padding: 0.75rem; border-radius: 12px 12px 12px 0; font-size: 0.8rem; width: 90%; }
+        .voice-container { display: flex; align-items: center; gap: 8px; }
+        .voice-wave { height: 12px; width: 90px; background: repeating-linear-gradient(90deg, var(--emerald), var(--emerald) 2px, transparent 2px, transparent 4px); }
+
+        /* Right Visual: Terminal Trace Panel */
+        .trace-panel {
+            width: 440px; border-radius: 12px; padding: 2.2rem;
+            font-family: var(--font-mono); font-size: 0.75rem; line-height: 1.9; color: var(--text-muted);
+            position: relative; z-index: 2; transform: rotate(2deg);
+        }
+        
+        @media (hover: hover) {
+            .trace-panel:hover { transform: rotate(0deg) translateY(-10px); z-index: 5; border-color: var(--border-glow); }
+        }
+        
+        .trace-header { border-bottom: 1px solid var(--border-dim); padding-bottom: 1rem; margin-bottom: 1.25rem; color: var(--text-faint); display: flex; justify-content: space-between; }
+        .t-actor { color: var(--emerald); font-weight: 600; margin-right: 10px; }
+        .t-payload { color: var(--text-main); }
+        
+        /* Fixed Missing Timestamp Class */
+        .tr-prefix { opacity: 0.3; margin-right: 10px; }
+
+        /* --- 3. CAPABILITIES SECTION (FEATURE GRID) --- */
+        .matrix-header { margin-bottom: 5rem; }
+        .matrix-header h2 { font-size: 3.2rem; margin-bottom: 1.25rem; }
+        .matrix-header p { color: var(--text-muted); font-size: 1.15rem; font-weight: 300; }
+
+        .bento-matrix { display: grid; grid-template-columns: repeat(12, 1fr); gap: 1.5rem; }
+        .bento-node { background: var(--bg-surface); border: 1px solid var(--border-dim); border-radius: 16px; padding: 3.5rem; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        .bento-node:hover { border-color: var(--border-glow); transform: translateY(-3px); box-shadow: 0 30px 60px rgba(0,0,0,0.5); }
+        .node-idx { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-faint); margin-bottom: 2rem; display: block; letter-spacing: 0.5px; }
+        .bento-node h3 { font-size: 1.65rem; margin-bottom: 1rem; color: var(--titanium); }
+        .bento-node p { color: var(--text-muted); font-size: 1rem; line-height: 1.65; font-weight: 300; }
+
+        .span-8 { grid-column: span 8; }
+        .span-4 { grid-column: span 4; }
+        .span-6 { grid-column: span 6; }
+        .span-12 { grid-column: span 12; }
+
+        /* --- 4. ARCHITECTURE SECTION --- */
+        .arch-columns { display: grid; grid-template-columns: 1fr 1.2fr; gap: 5rem; align-items: start; }
+        .arch-info h2 { font-size: 3.2rem; margin-bottom: 1.5rem; }
+        .arch-info p { color: var(--text-muted); font-size: 1.1rem; line-height: 1.7; margin-bottom: 3rem; font-weight: 300; }
+
+        .mesh-flow-visual { display: flex; flex-direction: column; gap: 1.25rem; position: relative; margin-bottom: 3rem; }
+        .mesh-flow-visual::before { content: ''; position: absolute; left: 24px; top: 0; bottom: 0; width: 1px; background: var(--border-dim); z-index: 0; }
+        .flow-step { display: flex; gap: 1.5rem; align-items: flex-start; position: relative; z-index: 1; }
+        .flow-step-num { width: 48px; height: 48px; background: var(--bg-void); border: 1px solid var(--border-dim); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 0.9rem; color: var(--emerald); font-weight: 700; transition: border-color 0.3s; }
+        .flow-step:hover .flow-step-num { border-color: var(--emerald); }
+        .flow-step-text h4 { font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-main); text-transform: uppercase; margin-bottom: 0.25rem; letter-spacing: 0.5px; }
+        .flow-step-text p { color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; font-weight: 300; }
+
+        .tech-stack-card { background: #020204; border: 1px solid var(--border-dim); border-radius: 12px; padding: 2.5rem 3rem; box-shadow: inset 0 0 40px rgba(255,255,255,0.01); }
+        .stack-list { list-style: none; }
+        .stack-list li { padding: 1.1rem 0; border-bottom: 1px dashed var(--border-dim); display: flex; justify-content: space-between; font-size: 0.95rem; color: var(--text-muted); }
+        .stack-list li:last-child { border-bottom: none; }
+        .stack-list li span:last-child { color: var(--text-main); font-family: var(--font-mono); font-size: 0.85rem; }
+
+        /* --- 5. PRICING SECTION --- */
+        .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; margin-top: 4rem; align-items: start; }
+        .price-card { background: var(--bg-surface); border: 1px solid var(--border-dim); border-radius: 12px; padding: 3rem; transition: all 0.3s ease; position: relative; overflow: hidden; }
+        .price-card:hover { border-color: var(--border-glow); transform: translateY(-4px); box-shadow: 0 30px 60px rgba(0,0,0,0.5); }
+        .price-card.popular { border-color: rgba(0, 230, 118, 0.25); background: linear-gradient(180deg, rgba(0, 230, 118, 0.04) 0%, transparent 100%); }
+        .price-card.popular::before { content: 'MOST POPULAR'; position: absolute; top: 0; left: 0; right: 0; background: var(--emerald); color: #000; font-family: var(--font-mono); font-size: 0.65rem; font-weight: 700; text-align: center; padding: 0.4rem; letter-spacing: 1px; }
+
+        .p-tier { font-size: 1.15rem; font-weight: 600; margin-bottom: 1rem; color: var(--titanium); text-transform: uppercase; letter-spacing: 0.5px; }
+        .p-price { font-family: var(--font-mono); font-size: 2.5rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.25rem; letter-spacing: -1px; }
+        .p-price span { font-size: 0.95rem; color: var(--text-muted); font-family: var(--font-display); font-weight: 400; letter-spacing: 0; }
+        .p-vol { color: var(--emerald); font-size: 0.8rem; font-family: var(--font-mono); margin-bottom: 2.5rem; font-weight: 500; }
+
+        .p-features { list-style: none; margin-bottom: 3rem; display: flex; flex-direction: column; gap: 0.9rem; }
+        .p-features li { color: var(--text-muted); font-size: 0.9rem; display: flex; gap: 10px; font-weight: 300; }
+        .p-features li::before { content: '→'; color: var(--text-faint); font-family: var(--font-mono); }
+
+        .self-hosted-box { grid-column: span 3; background: rgba(255,255,255,0.01); border: 1px dashed var(--border-dim); border-radius: 12px; padding: 2rem 3rem; margin-top: 2rem; display: flex; justify-content: space-between; align-items: center; }
+        .sh-text h4 { font-family: var(--font-mono); font-size: 0.9rem; color: var(--text-main); text-transform: uppercase; margin-bottom: 0.25rem; }
+        .sh-text p { color: var(--text-muted); font-size: 0.9rem; font-weight: 300; }
+
+        /* --- 6. CALL-TO-ACTION BAND --- */
+        .cta-band { background: linear-gradient(135deg, var(--bg-panel) 0%, var(--bg-void) 100%); border: 1px solid var(--border-dim); border-radius: 16px; padding: 5rem 4rem; text-align: center; position: relative; overflow: hidden; margin: 4rem 0; }
+        .cta-band::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle at center, rgba(0,230,118,0.03) 0%, transparent 60%); pointer-events: none; }
+        .cta-band h2 { font-size: 2.75rem; margin-bottom: 1rem; }
+        .cta-band p { color: var(--text-muted); font-size: 1.1rem; max-width: 600px; margin: 0 auto 2.5rem; font-weight: 300; }
+
+        /* --- 7. DEEP TECHNICAL FOOTER --- */
+        footer { padding: 6rem 0 3rem; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 4rem; border-top: 1px solid var(--border-dim); position: relative; z-index: 10; }
+        .footer-brand p { color: var(--text-muted); font-size: 0.85rem; margin-top: 1.5rem; max-width: 320px; line-height: 1.6; font-weight: 300; }
+        
+        .footer-col h5 { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-faint); margin-bottom: 1.75rem; letter-spacing: 1px; text-transform: uppercase; }
+        .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 0.8rem; }
+        .footer-col a { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; transition: color 0.2s; font-weight: 300; }
+        .footer-col a:hover { color: var(--text-main); }
+        .footer-bottom { margin-top: 6rem; padding-top: 2rem; border-top: 1px solid var(--border-dim); display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-faint); }
+
+        /* Responsiveness and Layout Guard Checks */
+        @media (max-width: 1024px) {
+            .hero, .arch-columns, .pricing-grid { grid-template-columns: 1fr; display: flex; flex-direction: column; gap: 4rem; }
+            .dual-viewport { justify-content: center; min-height: 420px; height: auto; }
+            .wa-mockup { left: 40px; position: absolute; }
+            .trace-panel { right: 40px; transform: none; position: absolute; }
+            .self-hosted-box { grid-column: span 1; flex-direction: column; text-align: center; gap: 1.5rem; }
+            footer { grid-template-columns: 1fr 1fr; }
+        }
+
+        @media (max-width: 768px) {
+            nav { flex-direction: column; gap: 1.5rem; padding: 1.5rem 0; }
+            .nav-links { display: none; }
+            .hero h1 { font-size: 2.75rem; }
+            .dual-viewport { flex-direction: column; min-height: auto; height: auto; gap: 2.5rem; }
+            .wa-mockup, .trace-panel { position: relative; left: auto; right: auto; transform: none; width: 100%; max-width: 440px; }
+            .bento-matrix { display: flex; flex-direction: column; }
+            .cta-band { padding: 3.5rem 2rem; }
+            footer { grid-template-columns: 1fr; gap: 3rem; }
+            .footer-bottom { flex-direction: column; gap: 1rem; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dot-matrix-overlay"></div>
+    <canvas id="swarm-canvas"></canvas>
+    <div class="ambient-core"></div>
+
+    <div class="container">
+        <nav>
+            <a href="#" class="logo">
+                <div class="logo-glyph"></div>
+                SUTRA Core
+            </a>
+            <div class="nav-links">
+                <a href="#capabilities">Capabilities</a>
+                <a href="#architecture">Architecture</a>
+                <a href="#pricing">Pricing</a>
+            </div>
+            <div style="display: flex; gap: 1rem;">
+                <a href="https://github.com/ravikumarve/sutra-core" class="btn btn-outline">GitHub</a>
+                <a href="https://gumroad.com/l/sutra-core" class="btn btn-primary">Deploy Instance</a>
+            </div>
+        </nav>
+
+        <section class="hero">
+            <div>
+                <div class="hero-badge mono">AI-Powered WhatsApp ERP</div>
+                <h1 class="text-gradient">The Headless ERP <br>for Bharat.</h1>
+                <p>Voice. Text. Hinglish. Zero training. SUTRA Core transforms colloquial chat input into perfectly clean, synchronized enterprise ledger parameters safely on a minimal single-node VPS.</p>
+                <div style="display: flex; gap: 1rem;">
+                    <a href="#capabilities" class="btn btn-primary">Explore Platform</a>
+                    <a href="docs/PRODUCTION_DEPLOYMENT_EXECUTION_GUIDE.md" class="btn btn-outline">Deployment Spec</a>
+                </div>
+            </div>
+
+            <div class="dual-viewport">
+                <div class="glass-pane wa-mockup">
+                    <div class="wa-header">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--emerald)" style="margin-top: 1px;"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
+                        <span>SUTRA Active Chat</span>
+                    </div>
+                    <div class="wa-bubble-in">
+                        <div class="voice-container">
+                            <span style="font-size: 0.9rem;">▶</span>
+                            <div class="voice-wave"></div>
+                            <span style="font-size: 0.7rem; opacity: 0.6;">0:08</span>
+                        </div>
+                    </div>
+                    <div class="wa-bubble-out">
+                        <strong style="color: var(--emerald); font-size: 0.8rem;">Order Confirmed ✅</strong><br>
+                        <span style="font-size: 0.75rem; display: block; margin-top: 4px; line-height: 1.4;">
+                            • 50x Silk Saree (Red)<br>
+                            • Stock Remaining: 120<br>
+                            <span style="opacity: 0.5; display: block; margin-top: 4px;">📄 Invoice_INV001.pdf attached</span>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="glass-pane trace-panel">
+                    <div class="trace-header">
+                        <div>EVENT_STREAM // REDIS_BUS</div>
+                        <div>NOMINAL</div>
+                    </div>
+                    <div class="trace-row"><span class="tr-prefix">[00:01]</span> <span class="tr-actor">LIAISON:</span> Audio stream ingested (audio/ogg)</div>
+                    <div class="trace-row"><span class="tr-prefix">[00:04]</span> <span class="tr-actor">LIAISON:</span> STT complete -> <span class="t-payload">"50 piece silk saree red bhej dena"</span></div>
+                    <div class="trace-row"><span class="tr-prefix">[00:06]</span> <span class="tr-actor">STRATEGIST:</span> Inventory schema lock allocated: SKU_SILK_RED (-50)</div>
+                    <div class="trace-row"><span class="tr-prefix">[00:08]</span> <span class="tr-actor">STRATEGIST:</span> Credit validation verified. Ledger balances safe.</div>
+                    <div class="trace-row"><span class="tr-prefix">[00:10]</span> <span class="tr-actor">AUDITOR:</span> Tax rules matched. Dispatching GST PDF receipt.</div>
+                    <div class="trace-row" style="margin-top: 8px; color: var(--emerald);"><span class="tr-prefix">></span> Pipeline task returned 200 OK. <span style="animation: blink 1s infinite;">_</span></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="capabilities">
+            <div class="matrix-header">
+                <h2>Built for the <span class="text-aurora">MSME Bazaar.</span></h2>
+                <p>Traditional ERP applications create workflow friction. SUTRA removes adoption friction by running complete enterprise tracking directly over chat tools.</p>
+            </div>
+
+            <div class="bento-matrix">
+                <div class="bento-node span-8">
+                    <span class="node-idx">LOG_01 // CONVERSATIONAL NLP</span>
+                    <h3>Voice-to-Order Processing</h3>
+                    <p>Process colloquial, localized dialect maps in Hinglish effortlessly. SUTRA Core cleans ambient background noise structures, runs asynchronous transcription tasks on standard CPU servers, and maps candidate phrases straight into structured catalog rows in under 30 seconds.</p>
+                </div>
+                <div class="bento-node span-4">
+                    <span class="node-idx">LOG_02 // ACID RELIABILITY</span>
+                    <h3>Auto Inventory</h3>
+                    <p>Stock balances are safely deducted from isolated transactional database models upon order confirmation, firing warning notifications before stockouts happen.</p>
+                </div>
+                <div class="bento-node span-6">
+                    <span class="node-idx">LOG_03 // LIQUIDITY PROPERTIES</span>
+                    <h3>Udhaar Credit Management</h3>
+                    <p>Tracks open client credit profiles, monitors ledger payment aging parameters, and deploys context-aware, polite outstanding reminders over WhatsApp conversations automatically.</p>
+                </div>
+                <div class="bento-node span-6">
+                    <span class="node-idx">LOG_04 // LOCAL REGULATORY COMPLIANCE</span>
+                    <h3>GST Invoicing Docs</h3>
+                    <p>Compiles complicated inventory line items and tax splits into legally verified, compliant business invoices, sending clean PDFs down the same active chat thread instantly.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="architecture" class="arch-columns">
+            <div class="arch-info">
+                <h2>Asynchronous <br><span class="text-aurora">Multi-Agent Mesh.</span></h2>
+                <p>SUTRA Core acts as an event-driven system architecture. Components run detached from one another, passing lightweight messages over fast namespaced Redis Stream paths.</p>
+                
+                <div class="mesh-flow-visual">
+                    <div class="flow-step">
+                        <div class="flow-step-num">01</div>
+                        <div class="flow-step-text">
+                            <h4>The Liaison Agent</h4>
+                            <p>Ingests message events from Meta webhooks, handles noise removal, and translates colloquial dialect maps asynchronously.</p>
+                        </div>
+                    </div>
+                    <div class="flow-step">
+                        <div class="flow-step-num">02</div>
+                        <div class="flow-step-text">
+                            <h4>The Strategist Agent</h4>
+                            <p>Evaluates incoming intent payloads across strict ACID parameters, auditing current inventory levels and Udhaar caps.</p>
+                        </div>
+                    </div>
+                    <div class="flow-step">
+                        <div class="flow-step-num">03</div>
+                        <div class="flow-step-text">
+                            <h4>The Auditor Agent</h4>
+                            <p>Logs final database updates, maps compliance metrics, compiles print-ready GST invoices, and signals the outbound gateway.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tech-stack-card">
+                <h3 style="font-size: 1.25rem; font-family: var(--font-mono); font-weight: 500; text-transform: uppercase; margin-bottom: 1.5rem; letter-spacing: 0.5px; color: var(--emerald);">Infrastructure Blueprint</h3>
+                <ul class="stack-list">
+                    <li>Backend Core API <span>FastAPI (Python 3.12+)</span></li>
+                    <li>Relational Ledger Store <span>PostgreSQL 15 (Schema Multi-tenancy)</span></li>
+                    <li>Asynchronous Message Bus <span>Redis Streams (Per-tenant namespaced)</span></li>
+                    <li>Acoustic NLP Service <span>OpenAI Whisper (CPU Optimized)</span></li>
+                    <li>Review Dashboard Interface <span>Next.js 14 + shadcn/ui</span></li>
+                    <li>Observability Suite <span>Prometheus + Grafana + Alertmanager</span></li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="pricing">
+            <div class="matrix-header" style="text-align: center; max-width: 600px; margin: 0 auto 4rem;">
+                <h2>Commercial Models.</h2>
+                <p>Simple consumption pricing tiers. Scale your instance effortlessly as your transaction throughput grows.</p>
+            </div>
+
+            <div class="pricing-grid">
+                <div class="price-card">
+                    <div class="p-tier">Starter</div>
+                    <div class="p-price">₹499<span>/mo</span></div>
+                    <div class="p-vol">500 orders / month ceiling</div>
+                    <ul class="p-features">
+                        <li>1 Connected WhatsApp Line</li>
+                        <li>Standard Hinglish STT Translation</li>
+                        <li>Basic PDF Invoice Structuring</li>
+                        <li>Community Support Channel</li>
+                    </ul>
+                    <a href="https://gumroad.com/l/sutra-core" class="btn btn-outline" style="width: 100%;">Provision Tier</a>
+                </div>
+
+                <div class="price-card popular">
+                    <div class="p-tier" style="color: var(--emerald);">Growth</div>
+                    <div class="p-price">₹1,499<span>/mo</span></div>
+                    <div class="p-vol">2,000 orders / month ceiling</div>
+                    <ul class="p-features">
+                        <li>3 Connected WhatsApp Lines</li>
+                        <li>3 Active Dashboard Review Seats</li>
+                        <li>Full Udhaar & Credit Balances Engine</li>
+                        <li>Priority Server Support SLA</li>
+                    </ul>
+                    <a href="https://gumroad.com/l/sutra-core" class="btn btn-primary" style="width: 100%;">Provision Tier</a>
+                </div>
+
+                <div class="price-card">
+                    <div class="p-tier">Business</div>
+                    <div class="p-price">₹4,999<span>/mo</span></div>
+                    <div class="p-vol">Unlimited Volume</div>
+                    <ul class="p-features">
+                        <li>Infinite Phone Inbound Integrations</li>
+                        <li>Bespoke Legacy ERP Adapters</li>
+                        <li>99.9% Infrastructure SLA Guarantee</li>
+                        <li>24/7 Dedicated Support Loops</li>
+                    </ul>
+                    <a href="#" class="btn btn-outline" style="width: 100%;">Contact Operations</a>
+                </div>
+
+                <div class="self-hosted-box">
+                    <div class="sh-text">
+                        <h4>Looking for full operational independence?</h4>
+                        <p>SUTRA Core is open-source under the MIT license schema, allowing self-hosted deployments.</p>
+                    </div>
+                    <a href="https://github.com/ravikumarve/sutra-core" class="btn btn-outline" style="border-radius: 4px;">Get Open Source Code</a>
+                </div>
+            </div>
+        </section>
+
+        <section style="padding: 2rem 0; border: none;">
+            <div class="cta-band">
+                <h2>Deploy your node today.</h2>
+                <p>Run your headless ERP infrastructure over lightweight, cost-efficient nodes starting under ₹800/month in cloud overhead.</p>
+                <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                    <a href="https://gumroad.com/l/sutra-core" class="btn btn-primary">Deploy Instance Now</a>
+                    <a href="https://github.com/ravikumarve/sutra-core" class="btn btn-outline">Explore Codebase</a>
+                </div>
+            </div>
+        </section>
+
+        <footer>
+            <div class="footer-brand">
+                <a href="#" class="logo"><div class="logo-glyph"></div>SUTRA Core</a>
+                <p>Systematic Unstructured Text & Resource Allocator. Built for the bazaar, deployable anywhere. Empowering local trading networks with transaction infrastructure.</p>
+            </div>
+            <div class="footer-col">
+                <h5>Platform Spec</h5>
+                <ul>
+                    <li><a href="#capabilities">Capabilities Matrix</a></li>
+                    <li><a href="#architecture">Orchestration Mesh</a></li>
+                    <li><a href="#pricing">Commercial Retainers</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h5>Development</h5>
+                <ul>
+                    <li><a href="https://github.com/ravikumarve/sutra-core">GitHub Repository</a></li>
+                    <li><a href="docs/PRODUCTION_DEPLOYMENT_EXECUTION_GUIDE.md">Deployment PRD Guide</a></li>
+                    <li><a href="docs/PRODUCTION_SECURITY_HARDENING.md">Security Engineering</a></li>
+                    <li><a href="docs/PRODUCTION_MONITORING_SETUP.md">Telemetry Setup</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h5>Compliance</h5>
+                <ul>
+                    <li><a href="docs/EXECUTIVE_SUMMARY.md">Executive Summary</a></li>
+                    <li><a href="CONTRIBUTING.md">Contribution Guide</a></li>
+                    <li><a href="LICENSE">MIT License Agreement</a></li>
+                </ul>
+            </div>
+        </footer>
+
+        <div class="footer-bottom">
+            <div>© 2026 SUTRA CORE NETWORKS. COMPLIANT WITH THE APACHE 2.0 AND MIT SCHEMAS.</div>
+            <div>STATUS: NOMINAL</div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('swarm-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height, time = 0;
+        let mouseX = 0, mouseY = 0;
+        const particles = [];
+
+        function init() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            particles.length = 0;
+            
+            /* Performance Refinement: Mathematical Screen Surface-Area Scaler */
+            const numParticles = Math.floor((width * height) / 12000);
+            
+            for(let i = 0; i < numParticles; i++) {
+                particles.push({
+                    x: (Math.random() - 0.5) * width,
+                    y: (Math.random() - 0.5) * height,
+                    z: Math.random() * 300,
+                    phase: Math.random() * Math.PI * 2,
+                    speed: 0.004 + Math.random() * 0.008
+                });
+            }
+        }
+
+        window.addEventListener('mousemove', (e) => {
+            mouseX = (e.clientX - width / 2) * 0.08;
+            mouseY = (e.clientY - height / 2) * 0.08;
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            ctx.clearRect(0, 0, width, height);
+            time += 0.0015;
+
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const fov = 650;
+
+            particles.forEach(p => {
+                p.phase += p.speed;
+                let orbit = 220 + Math.sin(p.phase + time) * 60;
+                
+                let cx = orbit * Math.cos(p.phase + mouseX * 0.01);
+                let cz = orbit * Math.sin(p.phase) + mouseY * 1.5;
+                let cy = 120 * Math.sin(p.phase * 1.4 + time);
+
+                let z3d = cz + 450;
+                let scale = fov / (fov + z3d);
+                let sx = cx * scale + centerX;
+                let sy = cy * scale + centerY;
+
+                ctx.beginPath();
+                ctx.arc(sx, sy, 1.25 * scale, 0, Math.PI * 2);
+                let opacity = Math.max(0.1, Math.min(0.5, 750 / z3d));
+                ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
+                ctx.fill();
+            });
+        }
+
+        window.addEventListener('resize', init);
+        init();
+        animate();
+    </script>
+</body>
+</html>

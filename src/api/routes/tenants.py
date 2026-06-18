@@ -215,6 +215,34 @@ async def list_tenants(
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
+@router.get("/system/status", response_model=BaseResponse)
+async def get_system_status(
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """
+    Get system status
+    (placed BEFORE parameterized routes to ensure correct matching)
+    """
+    try:
+        # Verify token
+        user = verify_token(credentials.credentials)
+        
+        # Get system status
+        status = await agent_coordinator.get_system_status()
+        
+        return BaseResponse(
+            success=True,
+            message="System status retrieved",
+            data=status
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting system status: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
 @router.get("/{tenant_id}/status", response_model=BaseResponse)
 async def get_tenant_status(
     tenant_id: str,
@@ -274,31 +302,4 @@ async def restart_tenant_agents(
         raise
     except Exception as e:
         logger.error(f"Error restarting tenant agents: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
-
-
-@router.get("/system/status", response_model=BaseResponse)
-async def get_system_status(
-    credentials: HTTPAuthorizationCredentials = Depends(security)
-):
-    """
-    Get system status
-    """
-    try:
-        # Verify token
-        user = verify_token(credentials.credentials)
-        
-        # Get system status
-        status = await agent_coordinator.get_system_status()
-        
-        return BaseResponse(
-            success=True,
-            message="System status retrieved",
-            data=status
-        )
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error getting system status: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")

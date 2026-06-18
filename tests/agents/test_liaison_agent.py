@@ -58,7 +58,7 @@ class TestLiaisonAgent:
         message = AgentMessage(
             tenant_id="test_tenant",
             source_agent=AgentType.LIAISON,
-            message_type=MessageType.INTENT_EXTRACTED,
+            message_type=MessageType.TEXT,
             payload={
                 "text": "I want to order 2 shirts",
                 "phone_number": "+919876543210"
@@ -66,7 +66,7 @@ class TestLiaisonAgent:
             confidence=1.0
         )
         
-        # Process message
+        # Process message (goes through else branch -> _process_text_message)
         response = await liaison_agent.process_message(message)
         
         # Verify response

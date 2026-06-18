@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SUTRA Core | Headless WhatsApp ERP</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Silk & Silicon Palette */
+            --bg-void: #030304;
+            --bg-surface: #0a0a0e;
+            --bg-glass: rgba(10, 10, 14, 0.6);
+            
+            --border-dim: rgba(255, 255, 255, 0.05);
+            --border-glow: rgba(255, 255, 255, 0.15);
+            --grid-line: rgba(255, 255, 255, 0.03);
+            
+            /* Accents */
+            --marigold: #f59e0b; /* Primary Brand */
+            --marigold-dim: rgba(245, 158, 11, 0.1);
+            --emerald: #10b981; /* Success / Money */
+            --whatsapp: #25D366;
+            
+            /* Text */
+            --text-main: #ffffff;
+            --text-muted: #94a3b8;
+            --text-faint: #475569;
+            
+            --font-ui: 'Outfit', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; scroll-behavior: smooth; }
+
+        body {
+            background-color: var(--bg-void);
+            color: var(--text-main);
+            font-family: var(--font-ui);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Lusion-Style Canvas & Grid */
+        #transaction-mesh {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 0; pointer-events: none; opacity: 0.7;
+        }
+
+        .architectural-grid {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 1; pointer-events: none;
+            background-image: 
+                linear-gradient(var(--grid-line) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+            background-size: 50px 50px;
+            background-position: center top;
+            mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 10%, rgba(0,0,0,0.1) 100%);
+            -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 10%, rgba(0,0,0,0.1) 100%);
+        }
+
+        /* Ambient Glows */
+        .glow-marigold {
+            position: absolute; top: -10vh; left: 20vw; width: 60vw; height: 50vh;
+            background: radial-gradient(ellipse at center, rgba(245, 158, 11, 0.08), transparent 70%);
+            filter: blur(60px); z-index: 0; pointer-events: none;
+        }
+
+        /* Typography */
+        h1, h2, h3 { font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; }
+        .mono { font-family: var(--font-mono); }
+        .text-marigold { color: var(--marigold); }
+        .text-emerald { color: var(--emerald); }
+
+        .text-gradient {
+            background: linear-gradient(135deg, #fff 0%, var(--text-muted) 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        /* Layout */
+        .container { max-width: 1280px; margin: 0 auto; padding: 0 2rem; position: relative; z-index: 10; }
+        section { padding: 10rem 0; border-bottom: 1px solid var(--border-dim); }
+
+        /* Navigation */
+        nav {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 1.5rem 0; border-bottom: 1px solid var(--border-dim);
+            position: relative; z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.5rem; font-weight: 800; color: var(--text-main);
+            text-decoration: none; display: flex; align-items: center; gap: 12px; letter-spacing: 1px;
+        }
+
+        .logo-mark {
+            width: 24px; height: 24px; border: 2px solid var(--marigold);
+            border-radius: 4px; position: relative; box-shadow: 0 0 15px var(--marigold-dim);
+        }
+        .logo-mark::after { content: ''; position: absolute; top: 4px; left: 4px; width: 6px; height: 6px; background: var(--marigold); }
+
+        .nav-links { display: flex; gap: 3rem; }
+        .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: color 0.3s; }
+        .nav-links a:hover { color: var(--text-main); }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 0.8rem 2rem; font-size: 0.9rem; font-weight: 600;
+            border-radius: 4px; text-decoration: none; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            cursor: pointer; backdrop-filter: blur(10px);
+        }
+
+        .btn-primary { background: var(--text-main); color: var(--bg-void); border: 1px solid var(--text-main); }
+        .btn-primary:hover { background: transparent; color: var(--text-main); }
+        
+        .btn-outline { background: transparent; color: var(--text-muted); border: 1px solid var(--border-dim); }
+        .btn-outline:hover { border-color: var(--marigold); color: var(--marigold); background: var(--marigold-dim); }
+
+        /* Hero Section */
+        .hero { min-height: 85vh; display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; padding-top: 2rem; }
+        
+        .hero-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 0.4rem 1rem; background: var(--marigold-dim);
+            border: 1px solid rgba(245, 158, 11, 0.2); color: var(--marigold);
+            font-size: 0.75rem; font-family: var(--font-mono); margin-bottom: 2rem; text-transform: uppercase; letter-spacing: 1px;
+        }
+
+        .hero h1 { font-size: clamp(3.5rem, 5vw, 5rem); margin-bottom: 1.5rem; }
+        .hero p { font-size: 1.15rem; color: var(--text-muted); line-height: 1.7; margin-bottom: 3rem; font-weight: 300; max-width: 500px; }
+
+        /* Dual Interface Visual (WhatsApp vs Terminal) */
+        .interface-split {
+            position: relative;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .glass-panel {
+            background: var(--bg-glass); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--border-glow); border-radius: 16px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.8);
+        }
+
+        /* Phone UI */
+        .wa-mockup {
+            width: 280px; position: absolute; left: 0; z-index: 2;
+            padding: 1rem; transform: rotate(-5deg); transition: transform 0.5s;
+        }
+        .wa-mockup:hover { transform: rotate(0deg) translateY(-10px); z-index: 4; }
+        .wa-header { display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-dim); padding-bottom: 0.5rem;}
+        .wa-bubble { background: #075E54; padding: 0.8rem; border-radius: 12px 12px 0 12px; font-size: 0.85rem; margin-bottom: 1rem; margin-left: auto; width: 85%; }
+        .wa-bubble-sys { background: var(--bg-surface); border: 1px solid var(--border-dim); padding: 0.8rem; border-radius: 12px 12px 12px 0; font-size: 0.85rem; width: 90%; }
+        .voice-note { display: flex; align-items: center; gap: 8px; }
+        .voice-wave { height: 15px; width: 100px; background: repeating-linear-gradient(90deg, #fff, #fff 2px, transparent 2px, transparent 4px); opacity: 0.7;}
+
+        /* Terminal UI */
+        .term-mockup {
+            width: 450px; position: relative; left: 100px; z-index: 1;
+            padding: 2rem; transform: rotate(2deg); transition: transform 0.5s;
+            font-family: var(--font-mono); font-size: 0.75rem; line-height: 1.8; color: var(--text-muted);
+        }
+        .term-mockup:hover { transform: rotate(0deg) translateY(-10px); z-index: 4; }
+        .term-header { border-bottom: 1px solid var(--border-dim); padding-bottom: 1rem; margin-bottom: 1rem; color: var(--text-faint); display: flex; gap: 6px;}
+        .term-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--text-faint); }
+        .t-sys { color: var(--marigold); }
+        .t-succ { color: var(--emerald); }
+
+        /* The Orchestration Mesh (Bento) */
+        .section-header { margin-bottom: 5rem; max-width: 800px; }
+        .section-header h2 { font-size: 3.5rem; margin-bottom: 1rem; }
+        .section-header p { color: var(--text-muted); font-size: 1.15rem; line-height: 1.6; font-weight: 300; }
+
+        .bento-grid {
+            display: grid; grid-template-columns: repeat(12, 1fr); gap: 1px;
+            background: var(--border-dim); border: 1px solid var(--border-dim);
+            border-radius: 8px; overflow: hidden;
+        }
+
+        .bento-cell {
+            background: var(--bg-surface); padding: 4rem; position: relative;
+            transition: background 0.4s;
+        }
+        .bento-cell:hover { background: rgba(255,255,255,0.02); }
+
+        .col-4 { grid-column: span 4; }
+        .col-8 { grid-column: span 8; }
+        .col-6 { grid-column: span 6; }
+        .col-12 { grid-column: span 12; }
+
+        .cell-tag { font-family: var(--font-mono); font-size: 0.75rem; color: var(--marigold); margin-bottom: 2rem; display: block; text-transform: uppercase;}
+        .bento-cell h3 { font-size: 1.8rem; margin-bottom: 1rem; }
+        .bento-cell p { color: var(--text-muted); font-size: 1rem; line-height: 1.7; font-weight: 300; }
+
+        /* Features List */
+        .feature-table {
+            width: 100%; border-collapse: collapse; text-align: left;
+            margin-top: 2rem;
+        }
+        .feature-table th, .feature-table td { padding: 1.5rem 1rem; border-bottom: 1px solid var(--border-dim); }
+        .feature-table th { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-faint); text-transform: uppercase; letter-spacing: 1px; font-weight: 500; }
+        .feature-table td { font-size: 1rem; color: var(--text-main); }
+        .feature-table tr:last-child td { border-bottom: none; }
+        .ft-desc { color: var(--text-muted); font-size: 0.95rem; }
+
+        /* Architecture Section */
+        .arch-layout { display: grid; grid-template-columns: 1fr 1.2fr; gap: 4rem; align-items: center; }
+        
+        .arch-diagram {
+            background: var(--bg-surface); border: 1px solid var(--border-dim);
+            border-radius: 12px; padding: 4rem; position: relative;
+        }
+        .arch-flow { display: flex; flex-direction: column; gap: 2rem; position: relative; }
+        .arch-flow::before { content: ''; position: absolute; left: 24px; top: 0; bottom: 0; width: 1px; background: var(--border-dim); z-index: 0; }
+        
+        .flow-step { display: flex; gap: 2rem; align-items: flex-start; position: relative; z-index: 1; }
+        .flow-icon { width: 50px; height: 50px; background: var(--bg-void); border: 1px solid var(--border-glow); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+        .flow-text h4 { font-family: var(--font-mono); font-size: 0.9rem; color: var(--marigold); margin-bottom: 0.5rem; text-transform: uppercase; }
+        .flow-text p { color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; }
+
+        .tech-list { list-style: none; margin-top: 3rem; }
+        .tech-list li { display: flex; justify-content: space-between; padding: 1.2rem 0; border-bottom: 1px dashed var(--border-dim); font-size: 0.95rem; }
+        .tech-list li span:last-child { font-family: var(--font-mono); color: var(--text-muted); font-size: 0.85rem; }
+
+        /* Economics / Pricing */
+        .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; margin-top: 4rem; }
+        
+        .price-card {
+            background: var(--bg-surface); border: 1px solid var(--border-dim);
+            border-radius: 8px; padding: 3rem; transition: all 0.3s; position: relative; overflow: hidden;
+        }
+        .price-card:hover { border-color: var(--border-glow); transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+        .price-card.popular { border-color: rgba(245, 158, 11, 0.3); background: linear-gradient(180deg, rgba(245, 158, 11, 0.05) 0%, transparent 100%); }
+        .price-card.popular::before { content: 'MOST POPULAR'; position: absolute; top: 0; left: 0; right: 0; background: var(--marigold); color: #000; font-family: var(--font-mono); font-size: 0.65rem; font-weight: 700; text-align: center; padding: 0.3rem; letter-spacing: 1px; }
+
+        .p-tier { font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; }
+        .p-price { font-family: var(--font-mono); font-size: 2.5rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.5rem; }
+        .p-price span { font-size: 1rem; color: var(--text-muted); font-weight: 400; }
+        .p-vol { color: var(--marigold); font-size: 0.85rem; font-family: var(--font-mono); margin-bottom: 2rem; }
+
+        .p-features { list-style: none; margin-bottom: 3rem; }
+        .p-features li { padding: 0.8rem 0; border-bottom: 1px solid var(--border-dim); color: var(--text-muted); font-size: 0.9rem; display: flex; gap: 10px; }
+        .p-features li::before { content: '→'; color: var(--text-faint); font-family: var(--font-mono); }
+
+        /* Footer */
+        footer { padding: 6rem 0 3rem; display: flex; justify-content: space-between; align-items: flex-end; }
+        .footer-brand p { color: var(--text-muted); font-size: 0.9rem; margin-top: 1rem; max-width: 320px; line-height: 1.6; }
+        .footer-links { display: flex; gap: 4rem; }
+        .footer-links ul { list-style: none; }
+        .footer-links h5 { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-faint); margin-bottom: 1.5rem; letter-spacing: 1px; }
+        .footer-links li { margin-bottom: 0.8rem; }
+        .footer-links a { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; transition: color 0.3s; }
+        .footer-links a:hover { color: var(--text-main); }
+
+        @media (max-width: 1024px) {
+            .hero { grid-template-columns: 1fr; text-align: center; }
+            .hero p { margin: 0 auto 3rem; }
+            .interface-split { justify-content: center; margin-top: 3rem; }
+            .wa-mockup { position: relative; transform: none; left: auto; margin-right: -50px; z-index: 2;}
+            .term-mockup { position: relative; transform: none; left: auto; z-index: 1;}
+            .bento-grid { display: flex; flex-direction: column; gap: 1px; }
+            .arch-layout { grid-template-columns: 1fr; }
+            .pricing-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 768px) {
+            nav { flex-direction: column; gap: 1.5rem; padding: 1.5rem 0; }
+            .nav-links { display: none; }
+            .hero h1 { font-size: 3rem; }
+            .interface-split { flex-direction: column; }
+            .wa-mockup, .term-mockup { margin: 0; width: 100%; }
+            .bento-cell { padding: 2.5rem 1.5rem; }
+            footer { flex-direction: column; gap: 3rem; align-items: flex-start; }
+            .footer-links { flex-direction: column; gap: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="glow-marigold"></div>
+
+    <canvas id="transaction-mesh"></canvas>
+
+    <div class="architectural-grid"></div>
+
+    <div class="container">
+        <nav>
+            <a href="#" class="logo">
+                <div class="logo-mark"></div>
+                SUTRA Core
+            </a>
+            <div class="nav-links mono">
+                <a href="#features">Capabilities</a>
+                <a href="#architecture">Architecture</a>
+                <a href="#pricing">Pricing</a>
+            </div>
+            <div style="display: flex; gap: 1rem;">
+                <a href="https://github.com/ravikumarve/sutra-core" class="btn btn-outline mono">GitHub</a>
+                <a href="https://gumroad.com/l/sutra-core" class="btn btn-primary mono">Deploy Instance</a>
+            </div>
+        </nav>
+
+        <section class="hero">
+            <div>
+                <div class="hero-badge">
+                    <span style="display: inline-block; width: 6px; height: 6px; background: var(--marigold); border-radius: 50%;"></span>
+                    AI-Powered WhatsApp ERP
+                </div>
+                <h1>The Headless ERP<br><span class="text-gradient">for Bharat.</span></h1>
+                <p>Voice. Text. Hinglish. Zero training. SUTRA Core transforms unstructured WhatsApp voice notes into structured database orders, manages inventory, tracks Udhaar, and generates GST PDFs instantly.</p>
+                
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <a href="#architecture" class="btn btn-primary">Explore the Mesh</a>
+                    <a href="docs/PRODUCTION_DEPLOYMENT_EXECUTION_GUIDE.md" class="btn btn-outline">Read Deployment Guide</a>
+                </div>
+            </div>
+
+            <div class="interface-split">
+                <div class="glass-panel wa-mockup">
+                    <div class="wa-header">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--whatsapp)"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
+                        <span style="font-weight: 600; font-size: 0.9rem;">SUTRA ERP</span>
+                    </div>
+                    
+                    <div class="wa-bubble">
+                        <div class="voice-note">
+                            <span style="font-size: 1.2rem;">▶</span>
+                            <div class="voice-wave"></div>
+                            <span>0:08</span>
+                        </div>
+                    </div>
+                    
+                    <div class="wa-bubble-sys">
+                        <strong>Order Confirmed ✅</strong><br>
+                        50x Silk Saree (Red)<br>
+                        Stock Remaining: 120<br>
+                        <span style="color: var(--text-muted); font-size: 0.75rem; margin-top: 5px; display: block;">📄 Invoice_INV001.pdf attached.</span>
+                    </div>
+                </div>
+
+                <div class="glass-panel term-mockup">
+                    <div class="term-header">
+                        <div class="term-dot"></div><div class="term-dot"></div><div class="term-dot"></div>
+                    </div>
+                    <div><span class="t-sys">WH_RCV:</span> Audio payload (audio/ogg)</div>
+                    <div><span class="t-sys">LIAISON:</span> <span style="color: var(--text-main);">"Bhaiya, 50 piece silk saree red color bhej dena udhaar pe."</span></div>
+                    <div><span class="t-sys">STRATEGIST:</span> Intent = ORDER. Qty = 50. SKU = SILK_RED. Payment = CREDIT.</div>
+                    <div><span class="t-sys">DB_TX:</span> Inventory deducted (-50). Credit limits OK.</div>
+                    <div><span class="t-sys">AUDITOR:</span> <span class="t-succ">PDF Invoice generated. Dispatching WhatsApp reply.</span></div>
+                    <div style="margin-top: 10px; animation: blink 1s infinite; color: var(--marigold);">_</div>
+                </div>
+            </div>
+        </section>
+
+        <section id="features">
+            <div class="section-header">
+                <h2>Built for the <span class="text-marigold">Bazaar.</span></h2>
+                <p>Shop owners are on WhatsApp 8 hours a day. SUTRA removes the friction of adopting complex ERP software by bringing enterprise logic directly to the chat interface.</p>
+            </div>
+
+            <table class="feature-table">
+                <thead>
+                    <tr>
+                        <th>Capability</th>
+                        <th>Execution</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="font-weight: 600;">🎙️ Voice-to-Order</td>
+                        <td class="ft-desc">Hinglish voice notes transcribed via local OpenAI Whisper and mapped to structured database orders in under 30 seconds.</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: 600;">📦 Auto Inventory</td>
+                        <td class="ft-desc">Stock is deducted automatically upon confirmation. Triggers proactive WhatsApp restocking alerts before a stockout occurs.</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: 600;">💰 Udhaar (Credit) Mgmt</td>
+                        <td class="ft-desc">Tracks credit limits, ledger aging, and initiates automated, polite payment reminders via WhatsApp.</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: 600;">🧾 GST Invoicing</td>
+                        <td class="ft-desc">Generates fully compliant PDF invoices and delivers them within the same WhatsApp thread instantly.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section id="architecture">
+            <div class="section-header">
+                <h2>Asynchronous <br><span class="text-marigold">Multi-Agent Mesh.</span></h2>
+                <p>SUTRA is not a simple chatbot. It is a stateful orchestration engine. No agent calls another directly; all communication routes through Redis Streams for independent scaling and fault tolerance.</p>
+            </div>
+
+            <div class="arch-layout">
+                <div class="arch-flow">
+                    <div class="flow-step">
+                        <div class="flow-icon text-marigold">01</div>
+                        <div class="flow-text">
+                            <h4>The Liaison</h4>
+                            <p>Ingests the raw chaos of WhatsApp (text or audio). Utilizes Whisper-Hinglish to transcribe and a Sentiment/Intent Analyzer to decode the user's objective.</p>
+                        </div>
+                    </div>
+                    <div class="flow-step">
+                        <div class="flow-icon text-marigold">02</div>
+                        <div class="flow-text">
+                            <h4>The Strategist</h4>
+                            <p>The operational core. Validates the decoded intent against the PostgreSQL database. Checks inventory levels, verifies credit scoring, and calculates pricing.</p>
+                        </div>
+                    </div>
+                    <div class="flow-step">
+                        <div class="flow-icon text-emerald">03</div>
+                        <div class="flow-text">
+                            <h4>The Auditor</h4>
+                            <p>Ensures compliance and immutable record-keeping. Commits the transaction, generates the GST PDF, and dispatches the final response back to WhatsApp.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="arch-diagram">
+                    <h3 style="font-size: 1.5rem; margin-bottom: 2rem;">Infrastructure Stack</h3>
+                    <ul class="tech-list">
+                        <li>Backend API <span>FastAPI (Python 3.12+)</span></li>
+                        <li>Database <span>PostgreSQL 15 (Multi-tenant)</span></li>
+                        <li>Event Bus / Queue <span>Redis Streams</span></li>
+                        <li>Speech-to-Text <span>OpenAI Whisper (CPU)</span></li>
+                        <li>Analytics Dashboard <span>Next.js 14 + shadcn/ui</span></li>
+                        <li>Observability <span>Prometheus + Grafana</span></li>
+                        <li>Deployment <span>Docker Compose / systemd</span></li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="pricing" style="border-bottom: none;">
+            <div class="section-header" style="text-align: center; margin: 0 auto 4rem;">
+                <h2>Monetization <span class="text-emerald">Model</span>.</h2>
+                <p>Self-hosted is MIT licensed and free. Paid plans provide managed hosting, guaranteed SLA, and priority support.</p>
+            </div>
+
+            <div class="pricing-grid">
+                <div class="price-card">
+                    <div class="p-tier">Starter</div>
+                    <div class="p-price">₹499<span>/mo</span></div>
+                    <div class="p-vol">500 ORDERS / MO</div>
+                    <ul class="p-features">
+                        <li>1 WhatsApp Number</li>
+                        <li>Standard Hinglish STT</li>
+                        <li>Basic PDF Invoicing</li>
+                        <li>Community Support</li>
+                    </ul>
+                    <a href="https://gumroad.com/l/sutra-core" class="btn btn-outline" style="width: 100%;">Select Plan</a>
+                </div>
+
+                <div class="price-card popular">
+                    <div class="p-tier">Growth</div>
+                    <div class="p-price">₹1,499<span>/mo</span></div>
+                    <div class="p-vol">2,000 ORDERS / MO</div>
+                    <ul class="p-features">
+                        <li>3 WhatsApp Numbers</li>
+                        <li>3 Dashboard Users</li>
+                        <li>Udhaar/Credit Tracking</li>
+                        <li>Priority Support</li>
+                    </ul>
+                    <a href="https://gumroad.com/l/sutra-core" class="btn btn-primary" style="width: 100%;">Select Plan</a>
+                </div>
+
+                <div class="price-card">
+                    <div class="p-tier">Business</div>
+                    <div class="p-price">₹4,999<span>/mo</span></div>
+                    <div class="p-vol">UNLIMITED ORDERS</div>
+                    <ul class="p-features">
+                        <li>Unlimited Numbers & Users</li>
+                        <li>Custom ERP Integrations</li>
+                        <li>Dedicated Account Manager</li>
+                        <li>99.9% SLA Guarantee</li>
+                    </ul>
+                    <a href="#" class="btn btn-outline" style="width: 100%;">Contact Sales</a>
+                </div>
+            </div>
+        </section>
+
+        <footer>
+            <div class="footer-brand">
+                <a href="#" class="logo">
+                    <div class="logo-mark"></div>
+                    SUTRA Core
+                </a>
+                <p>Built for the bazaar. Runs in the background. Never misses a bill. The headless ERP empowering India's 63 million MSMEs.</p>
+                <div class="mono" style="color: var(--text-faint); font-size: 0.75rem; margin-top: 2rem;">© 2026 SUTRA CORE. MIT LICENSE.</div>
+            </div>
+
+            <div class="footer-links">
+                <div>
+                    <h5>PRODUCT</h5>
+                    <ul>
+                        <li><a href="#features">Capabilities</a></li>
+                        <li><a href="#architecture">Agent Mesh</a></li>
+                        <li><a href="#pricing">Pricing</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h5>DEVELOPERS</h5>
+                    <ul>
+                        <li><a href="https://github.com/ravikumarve/sutra-core">GitHub Repository</a></li>
+                        <li><a href="docs/PRODUCTION_DEPLOYMENT_EXECUTION_GUIDE.md">Deployment Guide</a></li>
+                        <li><a href="docs/PRODUCTION_SECURITY_HARDENING.md">Security Hardening</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h5>COMPANY</h5>
+                    <ul>
+                        <li><a href="docs/EXECUTIVE_SUMMARY.md">Executive Summary</a></li>
+                        <li><a href="CONTRIBUTING.md">Contributing</a></li>
+                        <li><a href="LICENSE">License</a></li>
+                    </ul>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('transaction-mesh');
+        const ctx = canvas.getContext('2d');
+        
+        let width, height;
+        let particles = [];
+        
+        function init() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            particles = [];
+            
+            // Density calculation based on screen size
+            const count = Math.floor((width * height) / 12000); 
+            
+            for(let i = 0; i < count; i++) {
+                particles.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    vx: (Math.random() - 0.5) * 0.3,
+                    vy: (Math.random() - 0.5) * 0.3,
+                    // Pulse phase for organic glowing
+                    phase: Math.random() * Math.PI * 2,
+                    // Determine if this is a "node" (marigold) or a standard connection point
+                    isNode: Math.random() > 0.85 
+                });
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            ctx.clearRect(0, 0, width, height);
+
+            particles.forEach((p, index) => {
+                // Organic floating motion
+                p.x += p.vx + Math.sin(p.phase) * 0.1;
+                p.y += p.vy + Math.cos(p.phase) * 0.1;
+                p.phase += 0.02;
+
+                // Screen wrapping
+                if(p.x < -20) p.x = width + 20;
+                if(p.x > width + 20) p.x = -20;
+                if(p.y < -20) p.y = height + 20;
+                if(p.y > height + 20) p.y = -20;
+
+                // Draw the particle
+                ctx.beginPath();
+                if(p.isNode) {
+                    ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(245, 158, 11, ${0.4 + Math.sin(p.phase) * 0.4})`; // Pulsing Marigold
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = '#f59e0b';
+                } else {
+                    ctx.arc(p.x, p.y, 1, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+                    ctx.shadowBlur = 0;
+                }
+                ctx.fill();
+
+                // Draw interconnected transaction network
+                for(let j = index + 1; j < particles.length; j++) {
+                    const p2 = particles[j];
+                    const dx = p.x - p2.x;
+                    const dy = p.y - p2.y;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+
+                    if(dist < 150) {
+                        ctx.beginPath();
+                        
+                        // If connecting to a node, make the line Marigold, else subtle white
+                        if(p.isNode || p2.isNode) {
+                            ctx.strokeStyle = `rgba(245, 158, 11, ${0.15 * (1 - dist / 150)})`;
+                        } else {
+                            ctx.strokeStyle = `rgba(255, 255, 255, ${0.05 * (1 - dist / 150)})`;
+                        }
+                        
+                        ctx.lineWidth = 1;
+                        
+                        // Curved lines for an organic, data-flowing feel
+                        const cpX = (p.x + p2.x) / 2 + Math.sin(p.phase) * 15;
+                        const cpY = (p.y + p2.y) / 2 + Math.cos(p.phase) * 15;
+                        
+                        ctx.moveTo(p.x, p.y);
+                        ctx.quadraticCurveTo(cpX, cpY, p2.x, p2.y);
+                        ctx.stroke();
+                    }
+                }
+            });
+        }
+
+        window.addEventListener('resize', init);
+        init();
+        animate();
+    </script>
+</body>
+</html>

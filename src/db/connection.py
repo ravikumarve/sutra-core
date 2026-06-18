@@ -129,8 +129,9 @@ class DatabaseManager:
 db_manager = DatabaseManager()
 
 
+@asynccontextmanager
 async def get_db_session():
-    """Dependency injection for FastAPI routes"""
+    """Dependency injection for FastAPI routes and standalone async with usage"""
     async with db_manager.get_session() as session:
         yield session
 
@@ -139,6 +140,11 @@ async def init_database(test_mode: bool = False):
     """Initialize database engine"""
     db_manager.create_engine(test_mode=test_mode)
     logger.info("Database initialized successfully")
+
+
+async def close_database():
+    """Close all database connections"""
+    await db_manager.close()
 
 
 def get_db_manager() -> DatabaseManager:

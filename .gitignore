@@ -196,4 +196,4 @@ frontend/out/
 session-*.md
 
 # Design prototypes (superseded by frontend/)
-webpages/
+webpages/test_sutra.db

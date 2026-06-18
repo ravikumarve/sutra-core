@@ -20,6 +20,9 @@ class AgentType(str, Enum):
 
 class MessageType(str, Enum):
     """Message types for agent communication"""
+    # Input messages
+    TEXT = "text"
+    
     # Liaison messages
     INTENT_EXTRACTED = "intent_extracted"
     VOICE_TRANSCRIBED = "voice_transcribed"
@@ -240,6 +243,7 @@ class MessageValidator:
         """
         # Define required fields for each message type
         required_fields = {
+            MessageType.TEXT: ["text"],
             MessageType.INTENT_EXTRACTED: ["intent", "entities"],
             MessageType.VOICE_TRANSCRIBED: ["transcription", "language"],
             MessageType.SENTIMENT_ANALYZED: ["sentiment", "score"],
