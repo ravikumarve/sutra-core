@@ -14,7 +14,8 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 import uvicorn
 
 from src.config.settings import settings
-from src.api.routes import health, auth, webhooks, agents, tenants
+from src.db.connection import db_manager
+from src.api.routes import health, auth, webhooks, agents, tenants, dashboard, inventory
 from src.api.middleware.security import SecurityMiddleware
 from src.api.middleware.validation import ValidationMiddleware
 from src.api.middleware.rate_limit import RateLimitMiddleware
@@ -37,6 +38,14 @@ async def lifespan(app: FastAPI):
     """
     # Startup
     logger.info("Starting SUTRA Core application...")
+    
+    # Initialize database engine
+    try:
+        db_manager.create_engine()
+        logger.info("Database engine initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize database engine: {e}")
+        raise
     
     # Initialize agent coordinator (optional in development mode)
     try:
@@ -147,6 +156,8 @@ app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
 app.include_router(webhooks.router, prefix="/api/v1/webhooks", tags=["Webhooks"])
 app.include_router(agents.router, prefix="/api/v1/agents", tags=["Agents"])
 app.include_router(tenants.router, prefix="/api/v1/tenants", tags=["Tenants"])
+app.include_router(dashboard.router, prefix="/api/v1/dashboard", tags=["Dashboard"])
+app.include_router(inventory.router, prefix="/api/v1/inventory", tags=["Inventory"])
 
 
 # Root endpoint
