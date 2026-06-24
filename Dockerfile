@@ -4,7 +4,7 @@
 # ============================================
 # Stage 1: Builder
 # ============================================
-FROM python:3.12-slim AS builder
+FROM python:3.14-slim AS builder
 
 ARG BUILD_DATE
 ARG VCS_REF
@@ -28,7 +28,7 @@ RUN pip install --user --no-cache-dir ".[prod]"
 # ============================================
 # Stage 2: Production Image
 # ============================================
-FROM python:3.12-slim AS production
+FROM python:3.14-slim AS production
 
 LABEL maintainer="SUTRA Team" \
       org.opencontainers.image.title="SUTRA Core" \
